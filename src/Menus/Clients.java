@@ -4,10 +4,7 @@ import Classes.Address;
 import Classes.CitizenCard;
 import Classes.Client;
 import Classes.People;
-import pt.gov.cartaodecidadao.PTEID_EId;
-import pt.gov.cartaodecidadao.PTEID_ExNoCardPresent;
-import pt.gov.cartaodecidadao.PTEID_ExNoReader;
-import pt.gov.cartaodecidadao.PTEID_Exception;
+import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
