@@ -6,7 +6,7 @@ public class People {
     private int nif;
     private String name;
     private String contact;
-    private ArrayList<Animal> animais;
+    private Address address;
 
     public int getNif() {
         return nif;
@@ -32,22 +32,16 @@ public class People {
         this.contact = contact;
     }
 
-    public void addAnimal(Animal animal) {
-        animais.add(animal);
-    }
-
-    public void removeAnimal(int animalId){
-        animais.forEach((animal -> {
-            if(animal.getId() == animalId){
-                animais.remove(animal);
-            }
-        }));
-    }
-
     public People(int nif, String name, String contato) {
         this.nif = nif;
         this.name = name;
         this.contact = contato;
+    }
+    public Address getAddress() {
+        return address;
+    }
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     @Override
@@ -56,6 +50,7 @@ public class People {
             "Client Details:\n" +
             "NIF: " + nif + "\n" +
             "Nome: " + name + "\n" +
-            "Contato: " + contact;
+            "Contato: " + contact + "\n" +
+            address.toString();
     }
 }
