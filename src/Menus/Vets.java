@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public class Vets {
-    public static void showMenu(ArrayList<Vet> vets, ArrayList<People> clients){
+    public static void showMenu(ArrayList<People> peoples){
         int opcao;
 
         do {
@@ -28,7 +28,7 @@ public class Vets {
                             String contact = JOptionPane.showInputDialog(null, "Contact", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
                             Address address = askAddress();
                             Vet pp = new Vet(nif, name, idOV, contact);
-                            confirmVet(address, pp, vets);
+                            confirmVet(address, pp, peoples);
                         }catch (PTEID_ExNoReader ex){
                             JOptionPane.showMessageDialog(null, "No Reader Found!", "Create Vet", JOptionPane.ERROR_MESSAGE);
                         }catch (PTEID_ExNoCardPresent ex) {
@@ -45,35 +45,44 @@ public class Vets {
                         String contact = JOptionPane.showInputDialog(null, "Contact", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
                         Vet pp = new Vet(nif, name, idOV, contact);
                         Address address = askAddress();
-                        confirmVet(address, pp, vets);
+                        confirmVet(address, pp, peoples);
                     }
                     break;
                 case 2:
-                    if(!vets.isEmpty()) {
-                        vets.forEach((vet) -> {
-                            JOptionPane.showMessageDialog(null, vet.toString(), "Vet", JOptionPane.INFORMATION_MESSAGE);
-                        });
-                    }else{
+                    boolean isInside = false;
+                    for(People pp : peoples){
+                        if(pp instanceof Vet){
+                            isInside = true;
+                            Vet vetInfo = (Vet) pp;
+                            JOptionPane.showMessageDialog(null, vetInfo.toString(), "Vet", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
+                    if(!isInside) {
                         JOptionPane.showMessageDialog(null, "No records found!", "Vet", JOptionPane.ERROR_MESSAGE);
                     }
                     break;
                 case 3:
-                    vets.forEach((vet -> {
-                        String txtToShow = vet.toString() + "\n\n--- Animals ---\n";
-                        final StringBuilder finalTxtToShow = new StringBuilder(txtToShow);
+                    for(People pp : peoples){
+                        if(pp instanceof Vet){
+                            Vet vetData = (Vet) pp;
+                            String txtToShow = vetData.toString() + "\n\n--- Animals ---\n";
+                            final StringBuilder finalTxtToShow = new StringBuilder(txtToShow);
 
-                        vet.getAnimals().forEach((animalId -> {
-                            clients.forEach((person -> {
-                                Client clientData = (Client) person;
-                                Animal animal = findAnimal(animalId, clientData.getAnimais());
-                                if(animal != null){
-                                    finalTxtToShow.append(animal.toString()).append("\n");
+                            vetData.getAnimals().forEach((animalId -> {
+                                for(People ppData : peoples) {
+                                    if (ppData instanceof Client clientData) {
+                                        Animal animal = findAnimal(animalId, clientData.getAnimais());
+                                        if(animal != null){
+                                            finalTxtToShow.append(animal.toString()).append("\n");
+                                        }
+                                    }
                                 }
-                            }));
-                        }));
 
-                        JOptionPane.showMessageDialog(null, finalTxtToShow.toString(), "Animals associated with vets", JOptionPane.INFORMATION_MESSAGE);
-                    }));
+                            }));
+
+                            JOptionPane.showMessageDialog(null, finalTxtToShow.toString(), "Animals associated with vets", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
                     break;
                 case 0:
                     break;
@@ -83,11 +92,19 @@ public class Vets {
         }while (opcao != 0);
     }
 
-    private static void confirmVet(Address address, Vet vet, ArrayList<Vet> allVets){
+    private static void confirmVet(Address address, Vet vet, ArrayList<People> allPeople){
         int confirmData = JOptionPane.showConfirmDialog(null, "Please confirm the data bellow:\n\nName: " + vet.getName() + "\nNIF: " + vet.getNif() + "\nContact: " + vet.getContact() + "\nStreet: " + address.getNstreet() + "\nDoor: " + address.getndoor() + "\nZip Code: " + address.getZipCode() + "\nLocality: " + address.getNlocality(), "Create Vet", JOptionPane.YES_NO_OPTION);
         vet.setAddress(address);
         if(confirmData == 0){
-            allVets.add(vet);
+            allPeople.add(vet);
+            String fileData = "";
+            for(People pp : allPeople){
+                if(pp instanceof Vet){
+                    Vet vetInfo = (Vet) pp;
+                    fileData += vetInfo.getNif() + "," + vetInfo.getName() + "," + vetInfo.getContact() + "," + vetInfo.getAddress().getNstreet() + "," + vetInfo.getAddress().getZipCode() + "," + vetInfo.getAddress().getndoor() + "," + vetInfo.getAddress().getNlocality() + "," + vetInfo.getIdOV() + "\n";
+                }
+            }
+            Files.saveData("vets.csv", fileData);
             JOptionPane.showMessageDialog(null, "Vet added with success!", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
         }else{
             JOptionPane.showMessageDialog(null, "Please provide the information again!", "Typing error!", JOptionPane.INFORMATION_MESSAGE);

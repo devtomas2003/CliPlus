@@ -1,3 +1,5 @@
+package Menus;
+
 import Classes.*;
 import pt.gov.cartaodecidadao.*;
 
@@ -7,7 +9,7 @@ import java.util.ArrayList;
 import static Menus.Clients.findClient;
 
 public class Animals {
-    public static void showMenu(ArrayList<People> persons, ArrayList<Vet> vets){
+    public static void showMenu(ArrayList<People> persons){
         int opcao;
 
         do {
@@ -25,7 +27,7 @@ public class Animals {
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
-                            saveAnimal(pp, vets);
+                            saveAnimal(pp, persons);
                         }catch (PTEID_ExNoReader ex){
                             JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
                         }catch (PTEID_ExNoCardPresent ex) {
@@ -42,13 +44,13 @@ public class Animals {
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
-                        saveAnimal(pp, vets);
+                        saveAnimal(pp, persons);
                     }
                     break;
                 case 2:
                     if(!persons.isEmpty()){
                         persons.forEach((person) -> {
-                            Client clt = (Client) person;
+                            Client clt = (Client) person; // ver possivel erro
                             clt.getAnimais().forEach((animal -> {
                                 String toShow = animal.toString();
                                 toShow = toShow + "\nOwner: " + clt.getName();
@@ -67,7 +69,7 @@ public class Animals {
         }while (opcao != 0);
     }
 
-    private static void saveAnimal(Client pp, ArrayList<Vet> vets){
+    private static void saveAnimal(Client pp, ArrayList<People> peoples){
         String animalName = JOptionPane.showInputDialog(null, "Name of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
         int chipId = Interactive.readInt("Animal Chip ID", "Create Animal");
         String specie = JOptionPane.showInputDialog(null, "Specie of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
@@ -80,9 +82,12 @@ public class Animals {
         while (shouldRequestVetId){
             int vetId = Interactive.readInt("Vet ID", "Create Animal");
 
-            for(Vet vet : vets) {
-                if(vet.getIdOV() == vetId){
-                    vetFound = vet;
+            for(People ppData : peoples) {
+                if(ppData instanceof Vet){
+                    Vet vetInfo = (Vet) ppData;
+                    if(vetInfo.getIdOV() == vetId){
+                        vetFound = vetInfo;
+                    }
                 }
             }
 
@@ -98,6 +103,18 @@ public class Animals {
             Animal an = new Animal(chipId, animalName, specie, genre, weight);
             pp.addAnimal(an);
             vetFound.addAnimal(chipId);
+
+            String fileData = "";
+            for(People pessoa : peoples){
+                if(pessoa instanceof Client){
+                    Client clt = (Client) pessoa;
+                    for(Animal anm : clt.getAnimais()){
+                        fileData += anm.getName() + "," + anm.getId() + "," + anm.getGender() + "," + anm.getSpecie() + "," + anm.getWeight() + "," + clt.getNif() + "\n";
+                    }
+                }
+            }
+
+            Files.saveData("animals.csv", fileData);
 
             JOptionPane.showMessageDialog(null, "Animal added with success!", "Create Client", JOptionPane.INFORMATION_MESSAGE);
         }else{

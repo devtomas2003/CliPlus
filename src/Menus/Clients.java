@@ -11,7 +11,7 @@ public class Clients {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Clients Operations\n\n1 - Create Client\n2 - List Animals of a Client\n0 - Previus Menu", "Clients");
+            opcao = Interactive.readInt("Clients Operations\n\n1 - Create Client\n2 - List Animals of a Client\n3 - Delete Animal\n0 - Previus Menu", "Clients");
 
             switch (opcao){
                 case 1:
@@ -21,6 +21,14 @@ public class Clients {
                             PTEID_EId eid = CitizenCard.initiate();
                             String name = eid.getGivenName() + " " + eid.getSurname();
                             int nif = Integer.parseInt(eid.getTaxNo());
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    if(pp.getNif() == nif){
+                                        JOptionPane.showMessageDialog(null, "This client already exists!", "Create Client", JOptionPane.ERROR_MESSAGE);
+                                        break;
+                                    }
+                                }
+                            }
                             String contact = JOptionPane.showInputDialog(null, "Contact", "Create Client", JOptionPane.INFORMATION_MESSAGE);
                             Address address = askAddress();
                             Client pp = new Client(nif, name, contact);
@@ -109,7 +117,7 @@ public class Clients {
             String fileData = "";
             for(People pp : allPeople){
                 if(pp instanceof Client){
-                    fileData += pp.getNif() + "," + pp.getName() + "," + pp.getContact() + "," + pp.getAddress().getNstreet() + "," + pp.getAddress().getZipCode() + "," + pp.getAddress().getndoor() + "," + pp.getAddress().getNlocality() + ",cliente\n";
+                    fileData += pp.getNif() + "," + pp.getName() + "," + pp.getContact() + "," + pp.getAddress().getNstreet() + "," + pp.getAddress().getZipCode() + "," + pp.getAddress().getndoor() + "," + pp.getAddress().getNlocality() + "\n";
                 }
             }
             Files.saveData("clients.csv", fileData);
