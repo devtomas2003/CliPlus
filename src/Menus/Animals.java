@@ -13,7 +13,7 @@ public class Animals {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n 3 - List all interventions for an animal\n0 - Previus Menu", "Clients");
+            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n3 - List all interventions for an animal\n0 - Previus Menu", "Animals");
 
             switch (opcao){
                 case 1:
@@ -50,12 +50,14 @@ public class Animals {
                 case 2:
                     if(!persons.isEmpty()){
                         persons.forEach((person) -> {
-                            Client clt = (Client) person; // ver possivel erro
-                            clt.getAnimais().forEach((animal -> {
-                                String toShow = animal.toString();
-                                toShow = toShow + "\nOwner: " + clt.getName();
-                                JOptionPane.showMessageDialog(null, toShow, "Vet", JOptionPane.INFORMATION_MESSAGE);
-                            }));
+                            if(person instanceof Client){
+                                Client clt = (Client) person;
+                                clt.getAnimais().forEach((animal -> {
+                                    String toShow = animal.toString();
+                                    toShow = toShow + "\nOwner: " + clt.getName();
+                                    JOptionPane.showMessageDialog(null, toShow, "Vet", JOptionPane.INFORMATION_MESSAGE);
+                                }));
+                            }
                         });
                     }else{
                         JOptionPane.showMessageDialog(null, "No records found!", "Animals", JOptionPane.ERROR_MESSAGE);
