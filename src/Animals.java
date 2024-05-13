@@ -1,5 +1,3 @@
-package Menus;
-
 import Classes.*;
 import pt.gov.cartaodecidadao.*;
 
@@ -9,11 +7,11 @@ import java.util.ArrayList;
 import static Menus.Clients.findClient;
 
 public class Animals {
-    public static void showMenu(ArrayList<People> persons){
+    public static void showMenu(ArrayList<People> persons, ArrayList<Vet> vets){
         int opcao;
 
         do {
-            opcao = Integer.parseInt(JOptionPane.showInputDialog(null, "Animals Operations\n\n1 - Create Animal\n0 - Previus Menu", "Clients", JOptionPane.INFORMATION_MESSAGE));
+            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n 3 - List all interventions for an animal\n0 - Previus Menu", "Clients");
 
             switch (opcao){
                 case 1:
@@ -27,7 +25,7 @@ public class Animals {
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
-                            saveAnimal(pp);
+                            saveAnimal(pp, vets);
                         }catch (PTEID_ExNoReader ex){
                             JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
                         }catch (PTEID_ExNoCardPresent ex) {
@@ -38,16 +36,28 @@ public class Animals {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter the client NIF", "Find Client", JOptionPane.INFORMATION_MESSAGE));
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
                         Client pp = findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
-                        saveAnimal(pp);
+                        saveAnimal(pp, vets);
                     }
                     break;
                 case 2:
+                    if(!persons.isEmpty()){
+                        persons.forEach((person) -> {
+                            Client clt = (Client) person;
+                            clt.getAnimais().forEach((animal -> {
+                                String toShow = animal.toString();
+                                toShow = toShow + "\nOwner: " + clt.getName();
+                                JOptionPane.showMessageDialog(null, toShow, "Vet", JOptionPane.INFORMATION_MESSAGE);
+                            }));
+                        });
+                    }else{
+                        JOptionPane.showMessageDialog(null, "No records found!", "Animals", JOptionPane.ERROR_MESSAGE);
+                    }
                     break;
                 case 0:
                     break;
@@ -57,17 +67,38 @@ public class Animals {
         }while (opcao != 0);
     }
 
-    private static void saveAnimal(Client pp){
+    private static void saveAnimal(Client pp, ArrayList<Vet> vets){
         String animalName = JOptionPane.showInputDialog(null, "Name of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
-        int chipId = Integer.parseInt(JOptionPane.showInputDialog(null, "Animal Chip ID", "Create Animal", JOptionPane.INFORMATION_MESSAGE));
+        int chipId = Interactive.readInt("Animal Chip ID", "Create Animal");
         String specie = JOptionPane.showInputDialog(null, "Specie of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
         String genre = JOptionPane.showInputDialog(null, "Genre of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
         float weight = Float.parseFloat(JOptionPane.showInputDialog(null, "Weight of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE));
 
-        int confirmAnimalBox = JOptionPane.showConfirmDialog(null, "Please confirm the data bellow:\n\nAnimal Name: " + animalName + "\nChip ID: " + chipId + "\nSpecie: " + specie + "\nGenre: " + genre + "\nWeight: " + weight, "Create Animal", JOptionPane.YES_NO_OPTION);
+        boolean shouldRequestVetId = true;
+        Vet vetFound = null;
+
+        while (shouldRequestVetId){
+            int vetId = Interactive.readInt("Vet ID", "Create Animal");
+
+            for(Vet vet : vets) {
+                if(vet.getIdOV() == vetId){
+                    vetFound = vet;
+                }
+            }
+
+            if(vetFound == null){
+                JOptionPane.showMessageDialog(null, "No OMV ID found!", "Vets", JOptionPane.ERROR_MESSAGE);
+            }else{
+                shouldRequestVetId = false;
+            }
+        }
+
+        int confirmAnimalBox = JOptionPane.showConfirmDialog(null, "Please confirm the data bellow:\n\nAnimal Name: " + animalName + "\nChip ID: " + chipId + "\nSpecie: " + specie + "\nGenre: " + genre + "\nWeight: " + weight + "\nVet: " + vetFound.getName(), "Create Animal", JOptionPane.YES_NO_OPTION);
         if(confirmAnimalBox == 0){
             Animal an = new Animal(chipId, animalName, specie, genre, weight);
             pp.addAnimal(an);
+            vetFound.addAnimal(chipId);
+
             JOptionPane.showMessageDialog(null, "Animal added with success!", "Create Client", JOptionPane.INFORMATION_MESSAGE);
         }else{
             JOptionPane.showMessageDialog(null, "Please provide the information again!", "Typing error!", JOptionPane.INFORMATION_MESSAGE);

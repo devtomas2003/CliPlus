@@ -1,9 +1,6 @@
 package Menus;
 
-import Classes.Address;
-import Classes.CitizenCard;
-import Classes.Client;
-import Classes.People;
+import Classes.*;
 import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
@@ -14,7 +11,7 @@ public class Clients {
         int opcao;
 
         do {
-            opcao = Integer.parseInt(JOptionPane.showInputDialog(null, "Clients Operations\n\n1 - Create Client\n2 - List Animals of a Client\n0 - Previus Menu", "Clients", JOptionPane.INFORMATION_MESSAGE));
+            opcao = Interactive.readInt("Clients Operations\n\n1 - Create Client\n2 - List Animals of a Client\n0 - Previus Menu", "Clients");
 
             switch (opcao){
                 case 1:
@@ -39,7 +36,7 @@ public class Clients {
                         }
                     }else{
                         String name = JOptionPane.showInputDialog(null, "Name", "Create Client", JOptionPane.INFORMATION_MESSAGE);
-                        int nif = Integer.parseInt(JOptionPane.showInputDialog(null, "NIF", "Create Client", JOptionPane.INFORMATION_MESSAGE));
+                        int nif = Interactive.readInt("NIF", "Create Client");
                         String contact = JOptionPane.showInputDialog(null, "Contact", "Create Client", JOptionPane.INFORMATION_MESSAGE);
                         Client pp = new Client(nif, name, contact);
                         Address address = askAddress();
@@ -57,9 +54,13 @@ public class Clients {
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
-                            pp.getAnimais().forEach((animal) -> {
-                                JOptionPane.showMessageDialog(null, animal.toString(), "Animal", JOptionPane.INFORMATION_MESSAGE);
-                            });
+                            if(!pp.getAnimais().isEmpty()){
+                                pp.getAnimais().forEach((animal) -> {
+                                    JOptionPane.showMessageDialog(null, animal.toString(), "Animal", JOptionPane.INFORMATION_MESSAGE);
+                                });
+                            }else{
+                                JOptionPane.showMessageDialog(null, "No records found!", "Animals", JOptionPane.ERROR_MESSAGE);
+                            }
                         }catch (PTEID_ExNoReader ex){
                             JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
                         }catch (PTEID_ExNoCardPresent ex) {
@@ -70,15 +71,19 @@ public class Clients {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter the client NIF", "Find Client", JOptionPane.INFORMATION_MESSAGE));
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
                         Client pp = findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
-                        pp.getAnimais().forEach((animal) -> {
-                            JOptionPane.showMessageDialog(null, animal.toString(), "Animal", JOptionPane.INFORMATION_MESSAGE);
-                        });
+                        if(!pp.getAnimais().isEmpty()){
+                            pp.getAnimais().forEach((animal) -> {
+                                JOptionPane.showMessageDialog(null, animal.toString(), "Animal", JOptionPane.INFORMATION_MESSAGE);
+                            });
+                        }else{
+                            JOptionPane.showMessageDialog(null, "No records found!", "Animals", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                     break;
                 case 0:
@@ -90,8 +95,8 @@ public class Clients {
     }
     private static Address askAddress(){
         String street = JOptionPane.showInputDialog(null, "Street", "Create Client", JOptionPane.INFORMATION_MESSAGE);
-        int door = Integer.parseInt(JOptionPane.showInputDialog(null, "Door", "Create Client", JOptionPane.INFORMATION_MESSAGE));
-        int ZipCode = Integer.parseInt(JOptionPane.showInputDialog(null, "Zip Code", "Create Client", JOptionPane.INFORMATION_MESSAGE));
+        int door = Interactive.readInt("Door", "Create Client");
+        int ZipCode = Interactive.readInt("Zip Code", "Create Client");
         String Nlocality = JOptionPane.showInputDialog(null, "Locality", "Create Client", JOptionPane.INFORMATION_MESSAGE);
         return new Address(street, door, ZipCode, Nlocality);
     }
@@ -101,6 +106,13 @@ public class Clients {
         clt.setAddress(address);
         if(confirmData == 0){
             allPeople.add(clt);
+            String fileData = "";
+            for(People pp : allPeople){
+                if(pp instanceof Client){
+                    fileData += pp.getNif() + "," + pp.getName() + "," + pp.getContact() + "," + pp.getAddress().getNstreet() + "," + pp.getAddress().getZipCode() + "," + pp.getAddress().getndoor() + "," + pp.getAddress().getNlocality() + ",cliente\n";
+                }
+            }
+            Files.saveData("clients.csv", fileData);
             JOptionPane.showMessageDialog(null, "Client added with success!", "Create Client", JOptionPane.INFORMATION_MESSAGE);
         }else{
             JOptionPane.showMessageDialog(null, "Please provide the information again!", "Typing error!", JOptionPane.INFORMATION_MESSAGE);
