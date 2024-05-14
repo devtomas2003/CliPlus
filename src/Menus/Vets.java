@@ -7,6 +7,7 @@ import pt.gov.cartaodecidadao.PTEID_ExNoReader;
 import pt.gov.cartaodecidadao.PTEID_Exception;
 
 import javax.swing.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Vets {
@@ -14,7 +15,7 @@ public class Vets {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Vets Operations\n\n1 - Create Vet\n2 - List All Vets\n3 - List Animals associated with vets\n0 - Previus Menu", "Vets");
+            opcao = Interactive.readInt("Vets Operations\n\n1 - Create Vet\n2 - List All Vets\n3 - List Animals associated with vets\n4 - List associated Clients\n0 - Previus Menu", "Vets");
 
             switch (opcao){
                 case 1:
@@ -83,6 +84,31 @@ public class Vets {
                             JOptionPane.showMessageDialog(null, finalTxtToShow.toString(), "Animals associated with vets", JOptionPane.INFORMATION_MESSAGE);
                         }
                     }
+                    break;
+                case 4:
+                    String txtToShow = "";
+                    for(People pp : peoples) {
+                        if (pp instanceof Vet) {
+                            Vet vet = (Vet) pp;
+                            txtToShow += "Vet: " + vet.getName();
+                            ArrayList<Integer> listAnimals = vet.getAnimals();
+                            for(int i = 0; i < listAnimals.size(); i++){
+                                for(People ppData : peoples){
+                                    if(ppData instanceof Client){
+                                        Client clt = (Client) pp;
+                                        ArrayList<Animal> animais = clt.getAnimais();
+                                        for(Animal anm : animais){
+                                            if(anm.getId() == listAnimals.get(i)){
+                                                txtToShow += "\n- " + clt.getName();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            txtToShow += "\n";
+                        }
+                    }
+                    JOptionPane.showMessageDialog(null, txtToShow, "List associated Clients", JOptionPane.INFORMATION_MESSAGE);
                     break;
                 case 0:
                     break;

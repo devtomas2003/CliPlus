@@ -5,6 +5,7 @@ import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Clients {
     public static void showMenu(ArrayList<People> persons){
@@ -94,6 +95,37 @@ public class Clients {
                         }
                     }
                     break;
+                case 3:
+                    int CCRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                    if(CCRead == 0){
+                        try{
+                            PTEID_EId eid = CitizenCard.initiate();
+                            int nif = Integer.parseInt(eid.getTaxNo());
+                            Client pp = findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                            deleteAnimal(nif, persons);
+                        }catch (PTEID_ExNoReader ex){
+                            JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        }catch (PTEID_ExNoCardPresent ex) {
+                            JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } catch (PTEID_Exception e) {
+                            JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } finally {
+                            CitizenCard.release();
+                        }
+                    }else{
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        Client pp = findClient(nif, persons);
+                        if(pp == null){
+                            JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            break;
+                        }
+                        deleteAnimal(nif, persons);
+                    }
+                    break;
                 case 0:
                     break;
                 default:
@@ -135,5 +167,31 @@ public class Clients {
             }
         }
         return null;
+    }
+
+    private static void deleteAnimal(int nif, ArrayList<People> peoples){
+        for(People pp : peoples){
+            if(pp instanceof Client){
+                if(pp.getNif() == nif){
+                    HashMap<Integer, Integer> codigos = new HashMap<Integer, Integer>();
+                    Client clt = (Client) pp;
+                    String txtToShow = "Choose an animal to delete:\n";
+                    int codigo = 1;
+                    for(Animal anm : clt.getAnimais()){
+                        txtToShow += codigo + " - " + anm.getName() + "\n";
+                        codigos.put(codigo, anm.getId());
+                        codigo++;
+                    }
+                    int codigoToDelete = Interactive.readInt(txtToShow, "Delete Animal");
+                    if(codigos.containsKey(codigoToDelete)){
+                        System.out.println(codigos.get(codigoToDelete));
+                        clt.removeAnimal(codigos.get(codigoToDelete));
+                        JOptionPane.showMessageDialog(null, "Animal deleted with success!", "Delete Animal", JOptionPane.INFORMATION_MESSAGE);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Invalid Code", "Delete Animal", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        }
     }
 }

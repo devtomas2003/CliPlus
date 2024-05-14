@@ -63,6 +63,8 @@ public class Animals {
                         JOptionPane.showMessageDialog(null, "No records found!", "Animals", JOptionPane.ERROR_MESSAGE);
                     }
                     break;
+                case 3:
+                    break;
                 case 0:
                     break;
                 default:
