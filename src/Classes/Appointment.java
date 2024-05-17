@@ -1,40 +1,35 @@
 package Classes;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
 public class Appointment {
 
-    enum AppointmentType {
+    public enum AppointmentType {
         Vaccination,
         Surgery,
         Consultation
     }
 
-    enum AppointmentLocation {
+    public enum AppointmentLocation {
         OnSite,
         Remote
     }
 
-    private Date startTime;
-    private Date endTime;
+    private Slot timeSlot;
     private AppointmentType appoType;
     private AppointmentLocation appoLocal;
+    private Animal animal;
+    private Vet vet;
 
-    public Date getStartTime() {
-        return startTime;
+    public Slot getTimeSlot() {
+        return timeSlot;
     }
 
-    public void setStartTime(Date startTime) {
-        this.startTime = startTime;
-    }
-
-    public Date getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(Date endTime) {
-        this.endTime = endTime;
+    public void setTimeSlot(Slot slot) {
+        this.timeSlot = slot;
     }
 
     public AppointmentType getAppoType() {
@@ -53,19 +48,37 @@ public class Appointment {
         this.appoLocal = appoLocal;
     }
 
-    public Appointment(Date startTime, Date endTime, AppointmentType appoType, AppointmentLocation appoLocal) {
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public Animal getAnimal() {
+        return animal;
+    }
+
+    public void setAnimal(Animal animal) {
+        this.animal = animal;
+    }
+
+    public Vet getVet() {
+        return vet;
+    }
+
+    public void setVet(Vet vet) {
+        this.vet = vet;
+    }
+
+    public Appointment(AppointmentType appoType, AppointmentLocation appoLocal, Animal anm, Slot timeSlot, Vet vet) {
+        this.timeSlot = timeSlot;
         this.appoType = appoType;
         this.appoLocal = appoLocal;
+        this.animal = anm;
+        this.vet = vet;
     }
 
     @Override
     public String toString() {
         return
             "Appointment Details:\n" +
-                "Start Time: " + startTime + "\n" +
-                "End Time: " + endTime + "\n" +
+                "Start Time: " + timeSlot.getStartTime().toString() + "\n" +
+                "End Time: " + timeSlot.getEndTime().toString() + "\n" +
+                "Vet Name: " + vet.getName() + "\n" +
                 "Appointment Type: " + appoType + "\n" +
                 "Appointment Local: " + appoLocal;
     }

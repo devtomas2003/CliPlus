@@ -6,6 +6,7 @@ import pt.gov.cartaodecidadao.*;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class Clients {
     public static void showMenu(ArrayList<People> persons){
@@ -30,7 +31,7 @@ public class Clients {
                                     }
                                 }
                             }
-                            String contact = JOptionPane.showInputDialog(null, "Contact", "Create Client", JOptionPane.INFORMATION_MESSAGE);
+                            String contact = Interactive.readString("Contact", "Create Client");
                             Address address = askAddress();
                             Client pp = new Client(nif, name, contact);
                             confirmPerson(address, pp, persons);
@@ -44,9 +45,9 @@ public class Clients {
                             CitizenCard.release();
                         }
                     }else{
-                        String name = JOptionPane.showInputDialog(null, "Name", "Create Client", JOptionPane.INFORMATION_MESSAGE);
+                        String name = Interactive.readString("Name", "Create Client");
                         int nif = Interactive.readInt("NIF", "Create Client");
-                        String contact = JOptionPane.showInputDialog(null, "Contact", "Create Client", JOptionPane.INFORMATION_MESSAGE);
+                        String contact = Interactive.readString("Contact", "Create Client");
                         Client pp = new Client(nif, name, contact);
                         Address address = askAddress();
                         confirmPerson(address, pp, persons);
@@ -63,8 +64,8 @@ public class Clients {
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
-                            if(!pp.getAnimais().isEmpty()){
-                                pp.getAnimais().forEach((animal) -> {
+                            if(!pp.getAnimals().isEmpty()){
+                                pp.getAnimals().forEach((animal) -> {
                                     JOptionPane.showMessageDialog(null, animal.toString(), "Animal", JOptionPane.INFORMATION_MESSAGE);
                                 });
                             }else{
@@ -86,8 +87,8 @@ public class Clients {
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
-                        if(!pp.getAnimais().isEmpty()){
-                            pp.getAnimais().forEach((animal) -> {
+                        if(!pp.getAnimals().isEmpty()){
+                            pp.getAnimals().forEach((animal) -> {
                                 JOptionPane.showMessageDialog(null, animal.toString(), "Animal", JOptionPane.INFORMATION_MESSAGE);
                             });
                         }else{
@@ -134,17 +135,21 @@ public class Clients {
         }while (opcao != 0);
     }
     private static Address askAddress(){
-        String street = JOptionPane.showInputDialog(null, "Street", "Create Client", JOptionPane.INFORMATION_MESSAGE);
+        String street = Interactive.readString("Street", "Create Client");
         int door = Interactive.readInt("Door", "Create Client");
         int ZipCode = Interactive.readInt("Zip Code", "Create Client");
-        String Nlocality = JOptionPane.showInputDialog(null, "Locality", "Create Client", JOptionPane.INFORMATION_MESSAGE);
+        String Nlocality = Interactive.readString("Locality", "Create Client");
         return new Address(street, door, ZipCode, Nlocality);
     }
 
     private static void confirmPerson(Address address, Client clt, ArrayList<People> allPeople){
+        if(clt.getNif() == 0 || Objects.equals(clt.getName(), "") || Objects.equals(clt.getContact(), "") || Objects.equals(address.getNstreet(), "") || address.getndoor() == 0 || address.getZipCode() == 0 || Objects.equals(address.getNlocality(), "")){
+            JOptionPane.showMessageDialog(null, "Errors found. Please provide the information again!", "Typing error!", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         int confirmData = JOptionPane.showConfirmDialog(null, "Please confirm the data bellow:\n\nName: " + clt.getName() + "\nNIF: " + clt.getNif() + "\nContact: " + clt.getContact() + "\nStreet: " + address.getNstreet() + "\nDoor: " + address.getndoor() + "\nZip Code: " + address.getZipCode() + "\nLocality: " + address.getNlocality(), "Create Client", JOptionPane.YES_NO_OPTION);
-        clt.setAddress(address);
         if(confirmData == 0){
+            clt.setAddress(address);
             allPeople.add(clt);
             String fileData = "";
             for(People pp : allPeople){
@@ -177,15 +182,22 @@ public class Clients {
                     Client clt = (Client) pp;
                     String txtToShow = "Choose an animal to delete:\n";
                     int codigo = 1;
-                    for(Animal anm : clt.getAnimais()){
-                        txtToShow += codigo + " - " + anm.getName() + "\n";
-                        codigos.put(codigo, anm.getId());
-                        codigo++;
+                    for(Animal anm : clt.getAnimals()){
+                        if(anm.getIsActive()){
+                            txtToShow += codigo + " - " + anm.getName() + "\n";
+                            codigos.put(codigo, anm.getId());
+                            codigo++;
+                        }
                     }
                     int codigoToDelete = Interactive.readInt(txtToShow, "Delete Animal");
                     if(codigos.containsKey(codigoToDelete)){
-                        System.out.println(codigos.get(codigoToDelete));
-                        clt.removeAnimal(codigos.get(codigoToDelete));
+                        for(Animal anm : clt.getAnimals()){
+                            if(anm.getId() == codigos.get(codigoToDelete)){
+                                anm.swapIsActive();
+                                break;
+                            }
+                        }
+                        Animal.ExportAllData(peoples);
                         JOptionPane.showMessageDialog(null, "Animal deleted with success!", "Delete Animal", JOptionPane.INFORMATION_MESSAGE);
                     }else{
                         JOptionPane.showMessageDialog(null, "Invalid Code", "Delete Animal", JOptionPane.ERROR_MESSAGE);

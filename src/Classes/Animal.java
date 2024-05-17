@@ -1,11 +1,14 @@
 package Classes;
 
+import java.util.ArrayList;
+
 public class Animal {
     private int id;
     private String name;
     private String specie;
     private String gender;
-    private float weight;
+    private double weight;
+    private boolean isEnable;
 
     public int getId() {
         return id;
@@ -39,20 +42,38 @@ public class Animal {
         this.gender = gender;
     }
 
-    public float getWeight() {
+    public double getWeight() {
         return weight;
     }
 
-    public void setWeight(float weight) {
+    public void setWeight(double weight) {
         this.weight = weight;
     }
 
-    public Animal(int id, String name, String specie, String gender, float weight){
+    public boolean getIsActive() {
+        return isEnable;
+    }
+
+    public void swapIsActive() {
+        isEnable = !isEnable;
+    }
+
+    public Animal(int id, String name, String specie, String gender, double weight){
         this.id = id;
         this.name = name;
         this.specie = specie;
         this.gender = gender;
         this.weight = weight;
+        this.isEnable = true;
+    }
+
+    public Animal(int id, String name, String specie, String gender, double weight, boolean isActive){
+        this.id = id;
+        this.name = name;
+        this.specie = specie;
+        this.gender = gender;
+        this.weight = weight;
+        this.isEnable = isActive;
     }
 
     @Override
@@ -63,6 +84,34 @@ public class Animal {
                 "Name: " + name + "\n" +
                 "Specie: " + specie + "\n" +
                 "Gender: " + gender + "\n" +
+                "isEnable: " + isEnable + "\n" +
                 "Weight: " + weight;
+    }
+
+    public static void ExportAllData(ArrayList<People> peoples){
+        ArrayList<Vet> vetsData = new ArrayList<Vet>();
+        for(People pessoa : peoples) {
+            if (pessoa instanceof Vet) {
+                vetsData.add((Vet) pessoa);
+            }
+        }
+
+        String fileData = "";
+        for(People pessoa : peoples){
+            if(pessoa instanceof Client){
+                Client clt = (Client) pessoa;
+                for(Animal anm : clt.getAnimals()){
+                    int omvId = 0;
+                    for(Vet vetInfo : vetsData){
+                        if(vetInfo.getAnimals().contains(anm.getId())){
+                            omvId = vetInfo.getIdOV();
+                        }
+                    }
+                    fileData += anm.getName() + "," + anm.getId() + "," + anm.getGender() + "," + anm.getSpecie() + "," + anm.getWeight() + "," + clt.getNif() + "," + omvId + "," + anm.getIsActive() + "\n";
+                }
+            }
+        }
+
+        Files.saveData("animals.csv", fileData);
     }
 }

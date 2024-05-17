@@ -7,8 +7,8 @@ import pt.gov.cartaodecidadao.PTEID_ExNoReader;
 import pt.gov.cartaodecidadao.PTEID_Exception;
 
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Vets {
     public static void showMenu(ArrayList<People> peoples){
@@ -26,9 +26,23 @@ public class Vets {
                             String name = eid.getGivenName() + " " + eid.getSurname();
                             int nif = Integer.parseInt(eid.getTaxNo());
                             int idOV = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Create Vet");
-                            String contact = JOptionPane.showInputDialog(null, "Contact", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
+                            String contact = Interactive.readString("Contact", "Create Vet");
+
+                            Vet verDataOMV = findVetByOMV(idOV, peoples);
+                            if(verDataOMV != null){
+                                JOptionPane.showMessageDialog(null, "This OMV ID already exists!", "Duplicate Record", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+
+                            Vet vetDataNif = findVetByNif(nif, peoples);
+                            if(vetDataNif != null){
+                                JOptionPane.showMessageDialog(null, "This Vet NIF already exists!", "Duplicate Record", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+
                             Address address = askAddress();
                             Vet pp = new Vet(nif, name, idOV, contact);
+
                             confirmVet(address, pp, peoples);
                         }catch (PTEID_ExNoReader ex){
                             JOptionPane.showMessageDialog(null, "No Reader Found!", "Create Vet", JOptionPane.ERROR_MESSAGE);
@@ -40,10 +54,10 @@ public class Vets {
                             CitizenCard.release();
                         }
                     }else{
-                        String name = JOptionPane.showInputDialog(null, "Name", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
+                        String name = Interactive.readString("Name", "Create Vet");
                         int nif = Interactive.readInt("NIF", "Create Vet");
                         int idOV = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Create Vet");
-                        String contact = JOptionPane.showInputDialog(null, "Contact", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
+                        String contact = Interactive.readString("Contact", "Create Vet");
                         Vet pp = new Vet(nif, name, idOV, contact);
                         Address address = askAddress();
                         confirmVet(address, pp, peoples);
@@ -71,10 +85,12 @@ public class Vets {
 
                             vetData.getAnimals().forEach((animalId -> {
                                 for(People ppData : peoples) {
-                                    if (ppData instanceof Client clientData) {
-                                        Animal animal = findAnimal(animalId, clientData.getAnimais());
+                                    if (ppData instanceof Client) {
+                                        Animal animal = Animals.findAnimal(animalId, ((Client) ppData).getAnimals());
                                         if(animal != null){
-                                            finalTxtToShow.append(animal.toString()).append("\n");
+                                            if(animal.getIsActive()){
+                                                finalTxtToShow.append(animal.toString()).append("\n\n");
+                                            }
                                         }
                                     }
                                 }
@@ -89,17 +105,23 @@ public class Vets {
                     String txtToShow = "";
                     for(People pp : peoples) {
                         if (pp instanceof Vet) {
+                            ArrayList<Integer> clientsAlreadyExists = new ArrayList<Integer>();
                             Vet vet = (Vet) pp;
                             txtToShow += "Vet: " + vet.getName();
                             ArrayList<Integer> listAnimals = vet.getAnimals();
                             for(int i = 0; i < listAnimals.size(); i++){
                                 for(People ppData : peoples){
                                     if(ppData instanceof Client){
-                                        Client clt = (Client) pp;
-                                        ArrayList<Animal> animais = clt.getAnimais();
+                                        Client clt = (Client) ppData;
+                                        ArrayList<Animal> animais = clt.getAnimals();
                                         for(Animal anm : animais){
                                             if(anm.getId() == listAnimals.get(i)){
-                                                txtToShow += "\n- " + clt.getName();
+                                                if(!clientsAlreadyExists.contains(clt.getNif())){
+                                                    if(anm.getIsActive()){
+                                                        clientsAlreadyExists.add(clt.getNif());
+                                                        txtToShow += "\n- " + clt.getName();
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -119,6 +141,11 @@ public class Vets {
     }
 
     private static void confirmVet(Address address, Vet vet, ArrayList<People> allPeople){
+        if(vet.getNif() == 0 || vet.getIdOV() == 0 || Objects.equals(vet.getName(), "") || Objects.equals(vet.getContact(), "") || Objects.equals(address.getNstreet(), "") || address.getndoor() == 0 || address.getZipCode() == 0 || Objects.equals(address.getNlocality(), "")){
+            JOptionPane.showMessageDialog(null, "Errors found. Please provide the information again!", "Typing error!", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         int confirmData = JOptionPane.showConfirmDialog(null, "Please confirm the data bellow:\n\nName: " + vet.getName() + "\nNIF: " + vet.getNif() + "\nContact: " + vet.getContact() + "\nStreet: " + address.getNstreet() + "\nDoor: " + address.getndoor() + "\nZip Code: " + address.getZipCode() + "\nLocality: " + address.getNlocality(), "Create Vet", JOptionPane.YES_NO_OPTION);
         vet.setAddress(address);
         if(confirmData == 0){
@@ -138,17 +165,28 @@ public class Vets {
     }
 
     private static Address askAddress(){
-        String street = JOptionPane.showInputDialog(null, "Street", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
+        String street = Interactive.readString("Street", "Create Vet");
         int door = Interactive.readInt("Door", "Create Vet");
         int ZipCode = Interactive.readInt("Zip Code", "Create Vet");
-        String Nlocality = JOptionPane.showInputDialog(null, "Locality", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
+        String Nlocality = Interactive.readString("Locality", "Create Vet");
         return new Address(street, door, ZipCode, Nlocality);
     }
-
-    public static Animal findAnimal(int chipId, ArrayList<Animal> lAnimals) {
-        for(Animal animal : lAnimals) {
-            if(animal.getId() == chipId) {
-                return animal;
+    public static Vet findVetByOMV(int idOV, ArrayList<People> lPeople) {
+        for(People person : lPeople) {
+            if(person instanceof Vet){
+                if(((Vet) person).getIdOV() == idOV) {
+                    return (Vet) person;
+                }
+            }
+        }
+        return null;
+    }
+    public static Vet findVetByNif(int vetNif, ArrayList<People> lPeople) {
+        for(People person : lPeople) {
+            if(person instanceof Vet){
+                if(((Vet) person).getNif() == vetNif) {
+                    return (Vet) person;
+                }
             }
         }
         return null;

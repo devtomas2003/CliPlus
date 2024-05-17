@@ -1,9 +1,11 @@
 import Classes.*;
 import Menus.Animals;
+import Menus.Appointments;
 import Menus.Clients;
 import Menus.Vets;
 
 import javax.swing.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class Main {
@@ -11,8 +13,9 @@ public class Main {
         GUI.showAutoAdmission();
 
         ArrayList<People> people = new ArrayList<People>();
+        ArrayList<Appointment> apps = new ArrayList<Appointment>();
 
-        loadData(people);
+        loadData(people, apps);
 
         int optionSelected;
 
@@ -29,6 +32,9 @@ public class Main {
                 case 3:
                     Animals.showMenu(people);
                     break;
+                case 4:
+                    Appointments.showMenu(people, apps);
+                    break;
                 case 0:
                     break;
                 default:
@@ -37,7 +43,7 @@ public class Main {
         }while (optionSelected != 0);
     }
 
-    private static void loadData(ArrayList<People> people){
+    private static void loadData(ArrayList<People> people, ArrayList<Appointment> apps){
         String dadosClients = Files.readData("clients.csv");
         String linesClients[] = dadosClients.split("\n");
         for(int i = 0; i < linesClients.length; i++){
@@ -60,9 +66,41 @@ public class Main {
         String linesAnimals[] = dadosAnimals.split("\n");
         for(int i = 0; i < linesAnimals.length; i++){
             String lineAnimal[] = linesAnimals[i].split(",");
-            Animal anm = new Animal(Integer.parseInt(lineAnimal[1]), lineAnimal[0], lineAnimal[3], lineAnimal[2], Float.parseFloat(lineAnimal[4]));
+            Animal anm = new Animal(Integer.parseInt(lineAnimal[1]), lineAnimal[0], lineAnimal[3], lineAnimal[2], Float.parseFloat(lineAnimal[4]), Boolean.parseBoolean(lineAnimal[7]));
             Client clt = Clients.findClient(Integer.parseInt(lineAnimal[5]), people);
             clt.addAnimal(anm);
+            int codVet = Integer.parseInt(lineAnimal[6]);
+            Vet vetData = Vets.findVetByOMV(codVet, people);
+            vetData.addAnimal(anm.getId());
+        }
+        String dadosAppointments = Files.readData("appointments.csv");
+        String linesApps[] = dadosAppointments.split("\n");
+        for(int i = 0; i < linesApps.length; i++){
+            String linesApp[] = linesApps[i].split(",");
+
+            ArrayList<Animal> anms = new ArrayList<Animal>();
+
+            for(People pp : people){
+                if(pp instanceof Client){
+                    anms.addAll(((Client) pp).getAnimals());
+                }
+            }
+
+            Animal anm = Animals.findAnimal(Integer.parseInt(linesApp[3]), anms);
+
+            Appointment.AppointmentType aptType = Appointment.AppointmentType.valueOf(linesApp[0]);
+            Appointment.AppointmentLocation aptLocal = Appointment.AppointmentLocation.valueOf(linesApp[1]);
+
+            LocalDateTime lStart = LocalDateTime.parse(linesApp[4]);
+            LocalDateTime lEnd = LocalDateTime.parse(linesApp[5]);
+
+            Slot slt = new Slot(lStart, lEnd);
+
+            int codVet = Integer.parseInt(linesApp[2]);
+            Vet vetData = Vets.findVetByNif(codVet, people);
+
+            Appointment appt = new Appointment(aptType, aptLocal, anm, slt, vetData);
+            apps.add(appt);
         }
     }
 }

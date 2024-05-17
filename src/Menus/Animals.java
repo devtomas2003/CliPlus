@@ -5,6 +5,7 @@ import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static Menus.Clients.findClient;
 
@@ -52,7 +53,7 @@ public class Animals {
                         persons.forEach((person) -> {
                             if(person instanceof Client){
                                 Client clt = (Client) person;
-                                clt.getAnimais().forEach((animal -> {
+                                clt.getAnimals().forEach((animal -> {
                                     String toShow = animal.toString();
                                     toShow = toShow + "\nOwner: " + clt.getName();
                                     JOptionPane.showMessageDialog(null, toShow, "Vet", JOptionPane.INFORMATION_MESSAGE);
@@ -74,11 +75,31 @@ public class Animals {
     }
 
     private static void saveAnimal(Client pp, ArrayList<People> peoples){
-        String animalName = JOptionPane.showInputDialog(null, "Name of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
-        int chipId = Interactive.readInt("Animal Chip ID", "Create Animal");
-        String specie = JOptionPane.showInputDialog(null, "Specie of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
-        String genre = JOptionPane.showInputDialog(null, "Genre of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE);
-        float weight = Float.parseFloat(JOptionPane.showInputDialog(null, "Weight of animal", "Create Animal", JOptionPane.INFORMATION_MESSAGE));
+        String animalName = Interactive.readString("Name of animal", "Create Animal");
+
+        int chipId = 0;
+        do{
+            chipId = Interactive.readInt("Animal Chip ID", "Create Animal");
+
+            ArrayList<Animal> anms = new ArrayList<Animal>();
+
+            for(People ppData : peoples) {
+                if(ppData instanceof Client){
+                    ArrayList<Animal> anmsLocal = ((Client) ppData).getAnimals();
+                    anms.addAll(anmsLocal);
+                }
+            }
+
+            Animal anm = Animals.findAnimal(chipId, anms);
+            if(anm != null){
+                JOptionPane.showMessageDialog(null, "This CHIP ID already exists!", "Create Animal", JOptionPane.ERROR_MESSAGE);
+                chipId = 0;
+            }
+        }while (chipId == 0);
+
+        String specie = Interactive.readString("Specie of animal", "Create Animal");
+        String genre = Interactive.readString("Genre of animal", "Create Animal");
+        double weight = Interactive.readDouble("Weight of animal", "Create Animal");
 
         boolean shouldRequestVetId = true;
         Vet vetFound = null;
@@ -102,27 +123,30 @@ public class Animals {
             }
         }
 
+        if(Objects.equals(animalName, "") || chipId == 0 || Objects.equals(specie, "") || Objects.equals(genre, "") || weight == 0.00){
+            JOptionPane.showMessageDialog(null, "Errors found. Please provide the information again!", "Typing error!", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         int confirmAnimalBox = JOptionPane.showConfirmDialog(null, "Please confirm the data bellow:\n\nAnimal Name: " + animalName + "\nChip ID: " + chipId + "\nSpecie: " + specie + "\nGenre: " + genre + "\nWeight: " + weight + "\nVet: " + vetFound.getName(), "Create Animal", JOptionPane.YES_NO_OPTION);
         if(confirmAnimalBox == 0){
             Animal an = new Animal(chipId, animalName, specie, genre, weight);
             pp.addAnimal(an);
             vetFound.addAnimal(chipId);
 
-            String fileData = "";
-            for(People pessoa : peoples){
-                if(pessoa instanceof Client){
-                    Client clt = (Client) pessoa;
-                    for(Animal anm : clt.getAnimais()){
-                        fileData += anm.getName() + "," + anm.getId() + "," + anm.getGender() + "," + anm.getSpecie() + "," + anm.getWeight() + "," + clt.getNif() + "\n";
-                    }
-                }
-            }
-
-            Files.saveData("animals.csv", fileData);
+            Animal.ExportAllData(peoples);
 
             JOptionPane.showMessageDialog(null, "Animal added with success!", "Create Client", JOptionPane.INFORMATION_MESSAGE);
         }else{
             JOptionPane.showMessageDialog(null, "Please provide the information again!", "Typing error!", JOptionPane.INFORMATION_MESSAGE);
         }
+    }
+    public static Animal findAnimal(int chipId, ArrayList<Animal> lAnimals) {
+        for(Animal animal : lAnimals) {
+            if(animal.getId() == chipId) {
+                return animal;
+            }
+        }
+        return null;
     }
 }
