@@ -1,49 +1,71 @@
 import Classes.*;
 import Menus.*;
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.PdfWriter;
+import Utils.KioskServer;
 
 import javax.swing.*;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) {
-        GUI.showAutoAdmission();
-
         ArrayList<People> people = new ArrayList<People>();
         ArrayList<Appointment> apps = new ArrayList<Appointment>();
 
         loadData(people, apps);
 
-        int optionSelected;
+        Thread serverThread = new Thread(new KioskServer(apps, people));
+        serverThread.start();
 
+        String username = Interactive.readString("Username", "Authentication");
+
+        JPanel panel = new JPanel();
+        JLabel label = new JLabel("Password:");
+        JPasswordField pass = new JPasswordField(10);
+        panel.add(label);
+        panel.add(pass);
+        String[] options = new String[]{"OK", "Cancel"};
+        String password = "";
         do{
-            optionSelected = Interactive.readInt( "Welcome to CliPlus\n\n1 - Clients\n2 - Vets\n3 - Animals\n4 - Appointments\n5 - Database\n0 - Exit", "Menu");
-
-            switch (optionSelected){
-                case 1:
-                    Clients.showMenu(people);
-                    break;
-                case 2:
-                    Vets.showMenu(people);
-                    break;
-                case 3:
-                    Animals.showMenu(people);
-                    break;
-                case 4:
-                    Appointments.showMenu(people, apps);
-                    break;
-                case 5:
-                    Database.showMenu(people, apps);
-                case 0:
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(null, "The option selected is invalid!", "Invalid Option Selected", JOptionPane.ERROR_MESSAGE);
+            int option = JOptionPane.showOptionDialog(null, panel, "Authentication", JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,null, options, options[1]);
+            if(option == 0)
+            {
+                char[] passwordArr = pass.getPassword();
+                password = new String(passwordArr);
             }
-        }while (optionSelected != 0);
+        }while (password.equals(""));
+
+        if(Objects.equals(username, "admin") && Objects.equals(password, "admin")){
+            int optionSelected;
+
+            do{
+                optionSelected = Interactive.readInt( "Welcome to CliPlus\n\n1 - Clients\n2 - Vets\n3 - Animals\n4 - Appointments\n5 - Database\n0 - Exit", "Menu");
+
+                switch (optionSelected){
+                    case 1:
+                        Clients.showMenu(people);
+                        break;
+                    case 2:
+                        Vets.showMenu(people);
+                        break;
+                    case 3:
+                        Animals.showMenu(people);
+                        break;
+                    case 4:
+                        Appointments.showMenu(people, apps);
+                        break;
+                    case 5:
+                        Database.showMenu(people, apps);
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        JOptionPane.showMessageDialog(null, "The option selected is invalid!", "Invalid Option Selected", JOptionPane.ERROR_MESSAGE);
+                }
+            }while (optionSelected != 0);
+        }else{
+            JOptionPane.showMessageDialog(null, "Wrong username/password", "Authentication", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private static void loadData(ArrayList<People> people, ArrayList<Appointment> apps){
