@@ -1,6 +1,7 @@
 package Menus;
 
 import Classes.*;
+import Utils.CitizenCard;
 import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ public class Animals {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n3 - List all interventions for an animal\n0 - Previus Menu", "Animals");
+            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n0 - Previus Menu", "Animals");
 
             switch (opcao){
                 case 1:
@@ -63,8 +64,6 @@ public class Animals {
                     }else{
                         JOptionPane.showMessageDialog(null, "No records found!", "Animals", JOptionPane.ERROR_MESSAGE);
                     }
-                    break;
-                case 3:
                     break;
                 case 0:
                     break;

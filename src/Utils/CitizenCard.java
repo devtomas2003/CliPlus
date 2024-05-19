@@ -1,4 +1,4 @@
-package Classes;
+package Utils;
 
 import pt.gov.cartaodecidadao.*;
 

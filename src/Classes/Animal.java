@@ -1,8 +1,9 @@
 package Classes;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Animal {
+public class Animal implements Serializable {
     private int id;
     private String name;
     private String specie;

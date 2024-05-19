@@ -1,8 +1,9 @@
 package Classes;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Client extends People {
+public class Client extends People implements Serializable {
     private ArrayList<Animal> animals;
 
     public Client(int nif, String name, String contato) {

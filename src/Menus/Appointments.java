@@ -1,32 +1,31 @@
 package Menus;
 
 import Classes.*;
+import Utils.CitizenCard;
+import Utils.PDFGenerator;
 import pt.gov.cartaodecidadao.PTEID_EId;
 import pt.gov.cartaodecidadao.PTEID_ExNoCardPresent;
 import pt.gov.cartaodecidadao.PTEID_ExNoReader;
 import pt.gov.cartaodecidadao.PTEID_Exception;
 
 import javax.swing.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
 public class Appointments {
     public static void showMenu(ArrayList<People> persons, ArrayList<Appointment> apps){
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Appointment Operations\n\n1 - Create Appointment\n2 - List Types of Interventions\n0 - Previus Menu", "Appointments");
+            opcao = Interactive.readInt("Appointment Operations\n\n1 - Create Appointment\n2 - List Types of Interventions\n3 - Report interventions in a day\n4 - Report interventions for a vet\n5 - Report interventions for a vet in a date\n6 - Report past interventions for a animal\n7 - Report today interventions for a animal\n8 - Report future interventions for a animal\n9 - Report Past/Today Costs\n10 - Report Future Costs\n11 - Generate Invoice\n0 - Previus Menu", "Appointments");
 
             switch (opcao) {
                 case 1:
                     int findType = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
                     if(findType == 1){
-                        int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Create Client", JOptionPane.YES_NO_OPTION);
+                        int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(ccRead == 0) {
                             try {
                                 PTEID_EId eid = CitizenCard.initiate();
@@ -57,7 +56,7 @@ public class Appointments {
                             int chipId = selectAnimalFromClient(pp);
                             createAppointment(chipId, apps, persons);
                         }
-                    }else{
+                    }else if(findType == 2){
                         int chipId = 0;
                         boolean isAValidChip = false;
 
@@ -80,11 +79,518 @@ public class Appointments {
                         }while (!isAValidChip);
 
                         createAppointment(chipId, apps, persons);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Invalid Option", "Schuler Finder", JOptionPane.ERROR_MESSAGE);
                     }
-
                     break;
                 case 2:
                     JOptionPane.showMessageDialog(null, "List all types of interventions\n\n- Normal\n- Vaccination\n- Surgery", "Interventions", JOptionPane.INFORMATION_MESSAGE);
+                    break;
+                case 3:
+                    PDFGenerator.reportByDate(apps, persons);
+                    break;
+                case 4:
+                    PDFGenerator.reportByVet(apps, persons);
+                    break;
+                case 5:
+                    PDFGenerator.reportByVetAndDate(apps, persons);
+                    break;
+                case 6:
+                    int findTypeReports = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    if(findTypeReports == 1){
+                        int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                        if(readCC == 0){
+                            try{
+                                PTEID_EId eid = CitizenCard.initiate();
+                                int nif = Integer.parseInt(eid.getTaxNo());
+                                Client pp = Clients.findClient(nif, persons);
+                                if(pp == null){
+                                    JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                    break;
+                                }
+                                ArrayList<Animal> animals = null;
+                                for(People ppItr : persons){
+                                    if(ppItr instanceof Client){
+                                        animals.addAll(((Client) ppItr).getAnimals());
+                                    }
+                                }
+                                int anmId = selectAnimalFromClient(pp);
+                                Animal anm = Animals.findAnimal(anmId, animals);
+                                PDFGenerator.reportPastInterventionsByAnimal(apps, anm, pp);
+                            }catch (PTEID_ExNoReader ex){
+                                JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            }catch (PTEID_ExNoCardPresent ex) {
+                                JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } catch (PTEID_Exception e) {
+                                JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } finally {
+                                CitizenCard.release();
+                            }
+                        }else{
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+                            int anmId = selectAnimalFromClient(pp);
+                            Animal anm = Animals.findAnimal(anmId, animals);
+                            PDFGenerator.reportPastInterventionsByAnimal(apps, anm, pp);
+                        }
+                    }else if(findTypeReports == 2){
+                        int chipId = 0;
+                        boolean isAValidChip = false;
+
+                        do{
+                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal");
+
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    ArrayList<Animal> anms = ((Client) pp).getAnimals();
+                                    for(Animal anm : anms){
+                                        if (anm.getId() == chipId && anm.getIsActive()) {
+                                            isAValidChip = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(chipId == 0){
+                                isAValidChip = true;
+                            }
+
+                            if(!isAValidChip){
+                                JOptionPane.showMessageDialog(null, "This animal does not exists!", "Find Animal", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }while (!isAValidChip);
+                        if(chipId == 0){
+                            break;
+                        }
+
+                        ArrayList<Animal> animals = new ArrayList<>();
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                animals.addAll(((Client) ppItr).getAnimals());
+                            }
+                        }
+
+                        Client clt = null;
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                for(Animal anmItr : ((Client) ppItr).getAnimals()){
+                                    if(anmItr.getId() == chipId){
+                                        clt = (Client) ppItr;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Animal anm = Animals.findAnimal(chipId, animals);
+                        PDFGenerator.reportPastInterventionsByAnimal(apps, anm, clt);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Invalid Option", "Report Service", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 7:
+                    int findTypeReportsToday = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    if(findTypeReportsToday == 1){
+                        int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                        if(readCC == 0){
+                            try{
+                                PTEID_EId eid = CitizenCard.initiate();
+                                int nif = Integer.parseInt(eid.getTaxNo());
+                                Client pp = Clients.findClient(nif, persons);
+                                if(pp == null){
+                                    JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                    break;
+                                }
+                                ArrayList<Animal> animals = null;
+                                for(People ppItr : persons){
+                                    if(ppItr instanceof Client){
+                                        animals.addAll(((Client) ppItr).getAnimals());
+                                    }
+                                }
+                                int anmId = selectAnimalFromClient(pp);
+                                Animal anm = Animals.findAnimal(anmId, animals);
+                                PDFGenerator.reportPastInterventionsByAnimal(apps, anm, pp);
+                            }catch (PTEID_ExNoReader ex){
+                                JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            }catch (PTEID_ExNoCardPresent ex) {
+                                JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } catch (PTEID_Exception e) {
+                                JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } finally {
+                                CitizenCard.release();
+                            }
+                        }else{
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+                            int anmId = selectAnimalFromClient(pp);
+                            Animal anm = Animals.findAnimal(anmId, animals);
+                            PDFGenerator.reportTodayInterventionsByAnimal(apps, anm, pp);
+                        }
+                    }else if(findTypeReportsToday == 2){
+                        int chipId = 0;
+                        boolean isAValidChip = false;
+
+                        do{
+                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal");
+
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    ArrayList<Animal> anms = ((Client) pp).getAnimals();
+                                    for(Animal anm : anms){
+                                        if (anm.getId() == chipId && anm.getIsActive()) {
+                                            isAValidChip = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(chipId == 0){
+                                isAValidChip = true;
+                            }
+
+                            if(!isAValidChip){
+                                JOptionPane.showMessageDialog(null, "This animal does not exists!", "Find Animal", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }while (!isAValidChip);
+                        if(chipId == 0){
+                            break;
+                        }
+
+                        ArrayList<Animal> animals = new ArrayList<>();
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                animals.addAll(((Client) ppItr).getAnimals());
+                            }
+                        }
+
+                        Client clt = null;
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                for(Animal anmItr : ((Client) ppItr).getAnimals()){
+                                    if(anmItr.getId() == chipId){
+                                        clt = (Client) ppItr;
+                                    }
+                                }
+                            }
+                        }
+
+                        Animal anm = Animals.findAnimal(chipId, animals);
+                        PDFGenerator.reportTodayInterventionsByAnimal(apps, anm, clt);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Invalid Option", "Report Service", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 8:
+                    int findTypeReportsFuture = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    if(findTypeReportsFuture == 1){
+                        int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                        if(readCC == 0){
+                            try{
+                                PTEID_EId eid = CitizenCard.initiate();
+                                int nif = Integer.parseInt(eid.getTaxNo());
+                                Client pp = Clients.findClient(nif, persons);
+                                if(pp == null){
+                                    JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                    break;
+                                }
+                                ArrayList<Animal> animals = null;
+                                for(People ppItr : persons){
+                                    if(ppItr instanceof Client){
+                                        animals.addAll(((Client) ppItr).getAnimals());
+                                    }
+                                }
+                                int anmId = selectAnimalFromClient(pp);
+                                Animal anm = Animals.findAnimal(anmId, animals);
+                                PDFGenerator.reportPastInterventionsByAnimal(apps, anm, pp);
+                            }catch (PTEID_ExNoReader ex){
+                                JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            }catch (PTEID_ExNoCardPresent ex) {
+                                JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } catch (PTEID_Exception e) {
+                                JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } finally {
+                                CitizenCard.release();
+                            }
+                        }else{
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+                            int anmId = selectAnimalFromClient(pp);
+                            Animal anm = Animals.findAnimal(anmId, animals);
+                            PDFGenerator.reportFutureInterventionsByAnimal(apps, anm, pp);
+                        }
+                    }else if(findTypeReportsFuture == 2){
+                        int chipId = 0;
+                        boolean isAValidChip = false;
+
+                        do{
+                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal");
+
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    ArrayList<Animal> anms = ((Client) pp).getAnimals();
+                                    for(Animal anm : anms){
+                                        if (anm.getId() == chipId && anm.getIsActive()) {
+                                            isAValidChip = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(chipId == 0){
+                                isAValidChip = true;
+                            }
+
+                            if(!isAValidChip){
+                                JOptionPane.showMessageDialog(null, "This animal does not exists!", "Find Animal", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }while (!isAValidChip);
+                        if(chipId == 0){
+                            break;
+                        }
+
+                        ArrayList<Animal> animals = new ArrayList<>();
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                animals.addAll(((Client) ppItr).getAnimals());
+                            }
+                        }
+
+                        Client clt = null;
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                for(Animal anmItr : ((Client) ppItr).getAnimals()){
+                                    if(anmItr.getId() == chipId){
+                                        clt = (Client) ppItr;
+                                    }
+                                }
+                            }
+                        }
+
+                        Animal anm = Animals.findAnimal(chipId, animals);
+                        PDFGenerator.reportFutureInterventionsByAnimal(apps, anm, clt);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Invalid Option", "Report Service", JOptionPane.ERROR_MESSAGE);
+                    }
+                case 9:
+                    int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                    if(readCC == 0){
+                        try{
+                            PTEID_EId eid = CitizenCard.initiate();
+                            int nif = Integer.parseInt(eid.getTaxNo());
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+
+                            PDFGenerator.reportTodayAndPastCostsByClient(apps, animals, pp);
+                        }catch (PTEID_ExNoReader ex){
+                            JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        }catch (PTEID_ExNoCardPresent ex) {
+                            JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } catch (PTEID_Exception e) {
+                            JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } finally {
+                            CitizenCard.release();
+                        }
+                    }else{
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        Client pp = Clients.findClient(nif, persons);
+                        if(pp == null){
+                            JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            break;
+                        }
+
+                        ArrayList<Animal> animals = new ArrayList<>();
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                animals.addAll(((Client) ppItr).getAnimals());
+                            }
+                        }
+
+                        PDFGenerator.reportTodayAndPastCostsByClient(apps, animals, pp);
+                    }
+                    break;
+                case 10:
+                    int readCCFuture = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                    if(readCCFuture == 0){
+                        try{
+                            PTEID_EId eid = CitizenCard.initiate();
+                            int nif = Integer.parseInt(eid.getTaxNo());
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+
+                            PDFGenerator.reportFutureCostsByClient(apps, animals, pp);
+                        }catch (PTEID_ExNoReader ex){
+                            JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        }catch (PTEID_ExNoCardPresent ex) {
+                            JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } catch (PTEID_Exception e) {
+                            JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } finally {
+                            CitizenCard.release();
+                        }
+                    }else{
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        Client pp = Clients.findClient(nif, persons);
+                        if(pp == null){
+                            JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            break;
+                        }
+
+                        ArrayList<Animal> animals = new ArrayList<>();
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                animals.addAll(((Client) ppItr).getAnimals());
+                            }
+                        }
+
+                        PDFGenerator.reportFutureCostsByClient(apps, animals, pp);
+                    }
+                    break;
+                case 11:
+                    int findTypeInvoice = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    if(findTypeInvoice == 1){
+                        int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                        if(ccRead == 0) {
+                            try {
+                                PTEID_EId eid = CitizenCard.initiate();
+                                int nif = Integer.parseInt(eid.getTaxNo());
+                                Client pp = Clients.findClient(nif, persons);
+                                if(pp == null){
+                                    JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                    break;
+                                }
+
+                                ArrayList<Animal> animals = new ArrayList<>();
+
+                                for (People ppItr : persons) {
+                                    if (ppItr instanceof Client) {
+                                        animals.addAll(((Client) ppItr).getAnimals());
+                                    }
+                                }
+
+                                int chipId = selectAnimalFromClient(pp);
+                                Animal anm = Animals.findAnimal(chipId, animals);
+
+                                PDFGenerator.GenerateInvoice(anm, apps, pp);
+                            }catch (PTEID_ExNoReader ex){
+                                JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            }catch (PTEID_ExNoCardPresent ex) {
+                                JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } catch (PTEID_Exception e) {
+                                JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } finally {
+                                CitizenCard.release();
+                            }
+                        }else{
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+
+                            int chipId = selectAnimalFromClient(pp);
+                            Animal anm = Animals.findAnimal(chipId, animals);
+
+                            PDFGenerator.GenerateInvoice(anm, apps, pp);
+                        }
+                    }else if(findTypeInvoice == 2){
+                        int chipId = 0;
+                        boolean isAValidChip = false;
+
+                        do{
+                            chipId = Interactive.readInt("Enter the chip ID", "Find Animal");
+
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    ArrayList<Animal> anms = ((Client) pp).getAnimals();
+                                    for(Animal anm : anms){
+                                        if (anm.getId() == chipId) {
+                                            isAValidChip = true;
+                                        }
+                                    }
+                                }
+                            }
+                            if(!isAValidChip){
+                                JOptionPane.showMessageDialog(null, "This animal does not exists!", "Find Animal", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }while (!isAValidChip);
+
+                        boolean haveClient = false;
+                        Client clt = null;
+                        ArrayList<Animal> animals = new ArrayList<>();
+                        for (People ppItr : persons) {
+                            if (ppItr instanceof Client) {
+                                animals.addAll(((Client) ppItr).getAnimals());
+                                for(Animal anm : ((Client) ppItr).getAnimals()){
+                                    if(anm.getId() == chipId){
+                                        clt = (Client) ppItr;
+                                        haveClient = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        Animal anm = Animals.findAnimal(chipId, animals);
+                        PDFGenerator.GenerateInvoice(anm, apps, clt);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Invalid Option", "Schuler Finder", JOptionPane.ERROR_MESSAGE);
+                    }
                     break;
                 case 0:
                     break;
@@ -132,23 +638,34 @@ public class Appointments {
 
         int opcao = -1;
         do{
-            opcao = Interactive.readInt("What appointment do you want to schedule?\n\n1 - Normal\n2 - Vaccination\n3 - Surgery\n0 - Cancel", "Appointments");
+            opcao = Interactive.readInt("What appointment do you want to schedule?\n\n1 - Normal\n2 - Vaccination\n3 - Surgery", "Appointments");
             if(opcao != 1 && opcao != 2 && opcao != 3){
                 JOptionPane.showMessageDialog(null, "Invalid option!", "Scheduler", JOptionPane.ERROR_MESSAGE);
-                break;
             }
-
         }while (opcao == -1);
 
         int opcaoLocation = -1;
         do{
-            opcaoLocation = Interactive.readInt("Where this appointmen should happen?\n\n1 - On Site\n2 - Remote\n0 - Cancel", "Appointments");
+            opcaoLocation = Interactive.readInt("Where this appointment should happen?\n\n1 - On Site\n2 - Remote", "Appointments");
             if(opcaoLocation != 1 && opcao != 2){
                 JOptionPane.showMessageDialog(null, "Invalid option!", "Scheduler", JOptionPane.ERROR_MESSAGE);
-                break;
             }
-
         }while (opcaoLocation == -1);
+
+        Appointment.AppointmentLocation aptLocal;
+
+        if(opcao == 1){
+            aptLocal = Appointment.AppointmentLocation.OnSite;
+        }else{
+            aptLocal = Appointment.AppointmentLocation.Remote;
+        }
+
+        double getLocation = 0;
+        if(aptLocal == Appointment.AppointmentLocation.Remote){
+            do{
+                getLocation = Interactive.readDouble("How many KMs?", "Appointments");
+            }while (getLocation == 0);
+        }
 
         Vet vetSelected = null;
         do{
@@ -170,31 +687,50 @@ public class Appointments {
             }
         }while (opcaoTimeSlot == -1);
 
+        Appointment.AppointmentType aptType;
+
+        if(opcao == 1){
+            aptType = Appointment.AppointmentType.Consultation;
+        }else if(opcao == 2){
+            aptType = Appointment.AppointmentType.Vaccination;
+        }else{
+            aptType = Appointment.AppointmentType.Surgery;
+        }
+
+        double totalToPay = 0;
+
+        if(aptLocal == Appointment.AppointmentLocation.Remote){
+            totalToPay = 40 + getLocation;
+        }
+
+        if(aptType == Appointment.AppointmentType.Surgery){
+            if(anm.getWeight() >= 10){
+                totalToPay += 400;
+            }else{
+                totalToPay += 200;
+            }
+        }
+
+        if(aptType == Appointment.AppointmentType.Vaccination){
+            if(anm.getWeight() >= 10){
+                totalToPay += 50;
+            }else{
+                totalToPay += 100;
+            }
+        }
+
+        if(aptType == Appointment.AppointmentType.Consultation){
+            if(anm.getWeight() >= 10){
+                totalToPay += 25;
+            }else{
+                totalToPay += 50;
+            }
+        }
+
+        totalToPay *= 1.23;
+
         if(opcaoTimeSlot == 1){
-            int day = Interactive.readInt("Select an day", "Scheduler");
-            int month = Interactive.readInt("Select an month", "Scheduler");
-            int year = Interactive.readInt("Select an year", "Scheduler");
-
-            LocalDateTime dtCh = LocalDate.of(year, month, day).atStartOfDay();
-
-            Appointment.AppointmentType aptType;
-
-            if(opcao == 1){
-                aptType = Appointment.AppointmentType.Consultation;
-            }else if(opcao == 2){
-                aptType = Appointment.AppointmentType.Vaccination;
-            }else{
-                aptType = Appointment.AppointmentType.Surgery;
-            }
-
-            Appointment.AppointmentLocation aptLocal;
-
-            if(opcao == 1){
-                aptLocal = Appointment.AppointmentLocation.OnSite;
-            }else{
-                aptLocal = Appointment.AppointmentLocation.Remote;
-            }
-
+            LocalDateTime dtCh = Interactive.readDate("Scheduler", false, true);
             ArrayList<Slot> availableSlots = getSlotsAvailable(dtCh, apps, aptType, vetSelected);
 
             if(availableSlots.isEmpty()){
@@ -228,17 +764,16 @@ public class Appointments {
                         for(int i = 0; i < 3; i++) {
                             LocalDateTime endSch = startSch.plusMinutes(30);
                             Appointment apptNew = new Appointment(aptType, aptLocal, anm, new Slot(startSch, endSch), vetSelected);
+                            apptNew.setDistance(getLocation);
                             apps.add(apptNew);
                             startSch = endSch;
                         }
                     }
                     apps.add(appt);
-                    String fileData = "";
-                    for(Appointment app : apps){
-                        fileData += app.getAppoType() + "," + app.getAppoLocal() + "," + app.getVet().getNif() + "," + app.getAnimal().getId() + "," + app.getTimeSlot().getStartTime() + "," + app.getTimeSlot().getEndTime() + "\n";
-                    }
-                    Files.saveData("appointments.csv", fileData);
-                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!", "Scheduler", JOptionPane.INFORMATION_MESSAGE);
+
+                    saveAppointmentsInFile(apps);
+
+                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!\n\nTotal to pay: €" + totalToPay, "Scheduler", JOptionPane.INFORMATION_MESSAGE);
                 }else{
                     JOptionPane.showMessageDialog(null, "Invalid Code", "Scheduler", JOptionPane.ERROR_MESSAGE);
                 }
@@ -246,32 +781,25 @@ public class Appointments {
         }else{
             ZoneId z = ZoneId.of("Europe/Lisbon");
             LocalDateTime dtCh = LocalDateTime.now(z);
-
-            Appointment.AppointmentType aptType;
-
-            if(opcao == 1){
-                aptType = Appointment.AppointmentType.Consultation;
-            }else if(opcao == 2){
-                aptType = Appointment.AppointmentType.Vaccination;
-            }else{
-                aptType = Appointment.AppointmentType.Surgery;
-            }
-
-            Appointment.AppointmentLocation aptLocal;
-
-            if(opcao == 1){
-                aptLocal = Appointment.AppointmentLocation.OnSite;
-            }else{
-                aptLocal = Appointment.AppointmentLocation.Remote;
-            }
+            LocalDateTime now = LocalDateTime.now(z);
 
             ArrayList<Slot> availableSlots;
 
             do{
                 availableSlots = getSlotsAvailable(dtCh, apps, aptType, vetSelected);
-                dtCh = dtCh.plusDays(1);
+                if (dtCh.toLocalDate().equals(now.toLocalDate())) {
+                    Iterator<Slot> iterator = availableSlots.iterator();
+                    while (iterator.hasNext()) {
+                        Slot slt = iterator.next();
+                        if (slt.getStartTime().isBefore(now)) {
+                            iterator.remove();
+                        }
+                    }
+                }
+                if(availableSlots.isEmpty()){
+                    dtCh = dtCh.plusDays(1);
+                }
             }while (availableSlots.isEmpty());
-
                 HashMap<Integer, Slot> codigos = new HashMap<Integer, Slot>();
                 DateTimeFormatter formatterDay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 String formattedDate = dtCh.toLocalDate().format(formatterDay);
@@ -301,17 +829,16 @@ public class Appointments {
                         for(int i = 0; i < 3; i++) {
                             LocalDateTime endSch = startSch.plusMinutes(30);
                             Appointment apptNew = new Appointment(aptType, aptLocal, anm, new Slot(startSch, endSch), vetSelected);
+                            apptNew.setDistance(getLocation);
                             apps.add(apptNew);
                             startSch = endSch;
                         }
                     }
                     apps.add(appt);
-                    String fileData = "";
-                    for(Appointment app : apps){
-                        fileData += app.getAppoType() + "," + app.getAppoLocal() + "," + app.getVet().getNif() + "," + app.getAnimal().getId() + "," + app.getTimeSlot().getStartTime() + "," + app.getTimeSlot().getEndTime() + "\n";
-                    }
-                    Files.saveData("appointments.csv", fileData);
-                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!", "Scheduler", JOptionPane.INFORMATION_MESSAGE);
+
+                    saveAppointmentsInFile(apps);
+
+                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!\n\nTotal to pay: €" + totalToPay, "Scheduler", JOptionPane.INFORMATION_MESSAGE);
                 }else{
                     JOptionPane.showMessageDialog(null, "Invalid Code", "Scheduler", JOptionPane.ERROR_MESSAGE);
                 }
@@ -391,21 +918,11 @@ public class Appointments {
         return possibleSlots;
     }
 
-    private static String generateTimeString(ArrayList<Slot> slots) {
-        StringBuilder txtToShow = new StringBuilder();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-
-        int codigo = 1;
-        for (Slot slt : slots) {
-            txtToShow.append(codigo)
-                    .append(" - ")
-                    .append(slt.getStartTime().toLocalTime().format(formatter))
-                    .append(" until ")
-                    .append(slt.getEndTime().toLocalTime().format(formatter))
-                    .append("\n");
-            codigo++;
+    public static void saveAppointmentsInFile(ArrayList<Appointment> apps){
+        String fileData = "";
+        for(Appointment app : apps){
+            fileData += app.getAppoType() + "," + app.getAppoLocal() + "," + app.getVet().getNif() + "," + app.getAnimal().getId() + "," + app.getTimeSlot().getStartTime() + "," + app.getTimeSlot().getEndTime() + "," + app.getDistance() + "\n";
         }
-
-        return txtToShow.toString();
+        Files.saveData("appointments.csv", fileData);
     }
 }

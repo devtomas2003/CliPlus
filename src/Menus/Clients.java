@@ -1,6 +1,7 @@
 package Menus;
 
 import Classes.*;
+import Utils.CitizenCard;
 import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
@@ -151,13 +152,8 @@ public class Clients {
         if(confirmData == 0){
             clt.setAddress(address);
             allPeople.add(clt);
-            String fileData = "";
-            for(People pp : allPeople){
-                if(pp instanceof Client){
-                    fileData += pp.getNif() + "," + pp.getName() + "," + pp.getContact() + "," + pp.getAddress().getNstreet() + "," + pp.getAddress().getZipCode() + "," + pp.getAddress().getndoor() + "," + pp.getAddress().getNlocality() + "\n";
-                }
-            }
-            Files.saveData("clients.csv", fileData);
+
+            ExportClients(allPeople);
             JOptionPane.showMessageDialog(null, "Client added with success!", "Create Client", JOptionPane.INFORMATION_MESSAGE);
         }else{
             JOptionPane.showMessageDialog(null, "Please provide the information again!", "Typing error!", JOptionPane.INFORMATION_MESSAGE);
@@ -205,5 +201,15 @@ public class Clients {
                 }
             }
         }
+    }
+
+    public static void ExportClients(ArrayList<People> allPeople){
+        String fileData = "";
+        for(People pp : allPeople){
+            if(pp instanceof Client){
+                fileData += pp.getNif() + "," + pp.getName() + "," + pp.getContact() + "," + pp.getAddress().getNstreet() + "," + pp.getAddress().getZipCode() + "," + pp.getAddress().getndoor() + "," + pp.getAddress().getNlocality() + "\n";
+            }
+        }
+        Files.saveData("clients.csv", fileData);
     }
 }

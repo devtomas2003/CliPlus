@@ -1,8 +1,9 @@
 package Classes;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Slot {
+public class Slot implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 

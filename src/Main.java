@@ -1,10 +1,11 @@
 import Classes.*;
-import Menus.Animals;
-import Menus.Appointments;
-import Menus.Clients;
-import Menus.Vets;
+import Menus.*;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import javax.swing.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
@@ -20,7 +21,7 @@ public class Main {
         int optionSelected;
 
         do{
-            optionSelected = Interactive.readInt( "Welcome to CliPlus\n\n1 - Clients\n2 - Vets\n3 - Animals\n4 - Appointments\n0 - Exit", "Menu");
+            optionSelected = Interactive.readInt( "Welcome to CliPlus\n\n1 - Clients\n2 - Vets\n3 - Animals\n4 - Appointments\n5 - Database\n0 - Exit", "Menu");
 
             switch (optionSelected){
                 case 1:
@@ -35,6 +36,8 @@ public class Main {
                 case 4:
                     Appointments.showMenu(people, apps);
                     break;
+                case 5:
+                    Database.showMenu(people, apps);
                 case 0:
                     break;
                 default:
@@ -100,6 +103,7 @@ public class Main {
             Vet vetData = Vets.findVetByNif(codVet, people);
 
             Appointment appt = new Appointment(aptType, aptLocal, anm, slt, vetData);
+            appt.setDistance(Double.parseDouble(linesApp[6]));
             apps.add(appt);
         }
     }

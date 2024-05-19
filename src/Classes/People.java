@@ -1,8 +1,8 @@
 package Classes;
 
-import java.util.ArrayList;
+import java.io.Serializable;
 
-public class People {
+public class People implements Serializable {
     private int nif;
     private String name;
     private String contact;

@@ -1,11 +1,8 @@
 package Classes;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
+import java.io.Serializable;
 
-public class Appointment {
+public class Appointment implements Serializable {
 
     public enum AppointmentType {
         Vaccination,
@@ -23,6 +20,7 @@ public class Appointment {
     private AppointmentLocation appoLocal;
     private Animal animal;
     private Vet vet;
+    private double distance;
 
     public Slot getTimeSlot() {
         return timeSlot;
@@ -62,6 +60,14 @@ public class Appointment {
 
     public void setVet(Vet vet) {
         this.vet = vet;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
     }
 
     public Appointment(AppointmentType appoType, AppointmentLocation appoLocal, Animal anm, Slot timeSlot, Vet vet) {

@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="LGoodDatePicker-11.2.1">
+  <library name="pteidlib">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/src/LGoodDatePicker-11.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/src/pteidlibj.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

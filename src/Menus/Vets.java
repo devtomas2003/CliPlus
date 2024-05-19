@@ -1,6 +1,7 @@
 package Menus;
 
 import Classes.*;
+import Utils.CitizenCard;
 import pt.gov.cartaodecidadao.PTEID_EId;
 import pt.gov.cartaodecidadao.PTEID_ExNoCardPresent;
 import pt.gov.cartaodecidadao.PTEID_ExNoReader;
@@ -150,14 +151,7 @@ public class Vets {
         vet.setAddress(address);
         if(confirmData == 0){
             allPeople.add(vet);
-            String fileData = "";
-            for(People pp : allPeople){
-                if(pp instanceof Vet){
-                    Vet vetInfo = (Vet) pp;
-                    fileData += vetInfo.getNif() + "," + vetInfo.getName() + "," + vetInfo.getContact() + "," + vetInfo.getAddress().getNstreet() + "," + vetInfo.getAddress().getZipCode() + "," + vetInfo.getAddress().getndoor() + "," + vetInfo.getAddress().getNlocality() + "," + vetInfo.getIdOV() + "\n";
-                }
-            }
-            Files.saveData("vets.csv", fileData);
+            ExportVets(allPeople);
             JOptionPane.showMessageDialog(null, "Vet added with success!", "Create Vet", JOptionPane.INFORMATION_MESSAGE);
         }else{
             JOptionPane.showMessageDialog(null, "Please provide the information again!", "Typing error!", JOptionPane.INFORMATION_MESSAGE);
@@ -190,5 +184,16 @@ public class Vets {
             }
         }
         return null;
+    }
+
+    public static void ExportVets(ArrayList<People> allPeople){
+        String fileData = "";
+        for(People pp : allPeople){
+            if(pp instanceof Vet){
+                Vet vetInfo = (Vet) pp;
+                fileData += vetInfo.getNif() + "," + vetInfo.getName() + "," + vetInfo.getContact() + "," + vetInfo.getAddress().getNstreet() + "," + vetInfo.getAddress().getZipCode() + "," + vetInfo.getAddress().getndoor() + "," + vetInfo.getAddress().getNlocality() + "," + vetInfo.getIdOV() + "\n";
+            }
+        }
+        Files.saveData("vets.csv", fileData);
     }
 }

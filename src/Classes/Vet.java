@@ -1,8 +1,9 @@
 package Classes;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Vet extends People {
+public class Vet extends People implements Serializable {
     private int idOV;
 
     private ArrayList<Integer> animals = new ArrayList<Integer>();
