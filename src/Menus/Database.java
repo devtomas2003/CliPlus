@@ -4,6 +4,7 @@ import Classes.*;
 import Utils.FilesDAT;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 
 public class Database {
@@ -15,32 +16,53 @@ public class Database {
 
             switch (opcao) {
                 case 1:
-                    ArrayList<Animal> anms = new ArrayList<Animal>();
-                    ArrayList<Client> clients = new ArrayList<Client>();
-                    ArrayList<Vet> vets = new ArrayList<Vet>();
+                    JFileChooser fc = new JFileChooser();
+                    fc.setDialogTitle("Please select a folder to save the files");
+                    fc.setCurrentDirectory(new File("."));
+                    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    int returnVal = fc.showSaveDialog(null);
+                    if(returnVal == JFileChooser.APPROVE_OPTION) {
+                        File folder = fc.getSelectedFile();
+                        FilesDAT.writerAppointments(apps, folder);
+                        FilesDAT.writerPeoples(persons, folder);
 
-                    for(People pp : persons){
-                        if(pp instanceof Client){
-                            anms.addAll(((Client) pp).getAnimals());
-                            clients.add((Client) pp);
-                        }else{
-                            vets.add((Vet) pp);
-                        }
+                        JOptionPane.showMessageDialog(null, "All data exported with success!", "Objects Export", JOptionPane.INFORMATION_MESSAGE);
                     }
-
-                    FilesDAT.writerAppointments(apps);
-                    FilesDAT.writerPeoples(persons);
-
-                    JOptionPane.showMessageDialog(null, "All data exported with success!", "Objects Export", JOptionPane.INFORMATION_MESSAGE);
                     break;
                 case 2:
-                    persons.clear();
-                    apps.clear();
+                    File peoplesFile = null;
+                    File appsFile = null;
 
-                    persons.addAll(FilesDAT.readPeoples());
-                    apps.addAll(FilesDAT.readAppointments());
-                    JOptionPane.showMessageDialog(null, "All data imported with success!", "Objects Import", JOptionPane.INFORMATION_MESSAGE);
+                    JFileChooser fcReaderClients = new JFileChooser();
+                    fcReaderClients.setDialogTitle("Please select the people file to load");
+                    fcReaderClients.setCurrentDirectory(new File("."));
+                    fcReaderClients.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    int returnValClts = fcReaderClients.showDialog(null, "Open");
 
+                    if(returnValClts == JFileChooser.APPROVE_OPTION) {
+                        peoplesFile = fcReaderClients.getSelectedFile();
+                    }
+
+                    JFileChooser fcReaderApss = new JFileChooser();
+                    fcReaderApss.setDialogTitle("Please select the appointments file to load");
+                    fcReaderApss.setCurrentDirectory(new File("."));
+                    fcReaderApss.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    int returnValApps = fcReaderApss.showDialog(null, "Open");
+
+                    if(returnValApps == JFileChooser.APPROVE_OPTION) {
+                        appsFile = fcReaderApss.getSelectedFile();
+                    }
+
+                    if(appsFile != null && peoplesFile != null){
+                        persons.clear();
+                        apps.clear();
+
+                        persons.addAll(FilesDAT.readPeoples(peoplesFile));
+                        apps.addAll(FilesDAT.readAppointments(appsFile));
+                        JOptionPane.showMessageDialog(null, "All data imported with success!", "Objects Import", JOptionPane.INFORMATION_MESSAGE);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "At least one file cannot be load!", "Objects Import Error", JOptionPane.ERROR_MESSAGE);
+                    }
                     break;
                 case 3:
                     Clients.ExportClients(persons);

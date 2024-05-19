@@ -6,11 +6,10 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class FilesDAT {
-    public static ArrayList<Appointment> readAppointments() {
+    public static ArrayList<Appointment> readAppointments(File appFile) {
         ArrayList<Appointment> result = new ArrayList<Appointment>();
         try {
-            File f = new File("appointments.dat");
-            FileInputStream fis = new FileInputStream(f);
+            FileInputStream fis = new FileInputStream(appFile);
             ObjectInputStream ois = new ObjectInputStream(fis);
             while (fis.available() > 0) {
                 try {
@@ -32,9 +31,9 @@ public class FilesDAT {
         }
         return result;
     }
-    public static void writerAppointments(ArrayList<Appointment> list) {
+    public static void writerAppointments(ArrayList<Appointment> list, File pathName) {
         try {
-            File f = new File("appointments.dat");
+            File f = new File(pathName, "appointments.dat");
             FileOutputStream fos = new FileOutputStream(f);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
@@ -50,9 +49,9 @@ public class FilesDAT {
         }
     }
 
-    public static void writerPeoples(ArrayList<People> list) {
+    public static void writerPeoples(ArrayList<People> list, File folder) {
         try {
-            File f = new File("people.dat");
+            File f = new File(folder, "people.dat");
             FileOutputStream fos = new FileOutputStream(f);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
@@ -67,11 +66,10 @@ public class FilesDAT {
             error.printStackTrace();
         }
     }
-    public static ArrayList<People> readPeoples() {
+    public static ArrayList<People> readPeoples(File peopleFile) {
         ArrayList<People> result = new ArrayList<People>();
         try {
-            File f = new File("people.dat");
-            FileInputStream fis = new FileInputStream(f);
+            FileInputStream fis = new FileInputStream(peopleFile);
             ObjectInputStream ois = new ObjectInputStream(fis);
             while (fis.available() > 0) {
                 try {

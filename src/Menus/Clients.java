@@ -47,7 +47,14 @@ public class Clients {
                         }
                     }else{
                         String name = Interactive.readString("Name", "Create Client");
-                        int nif = Interactive.readInt("NIF", "Create Client");
+                        int nif = 0;
+                        do{
+                            nif = Interactive.readInt("NIF", "Create Client");
+                            if(String.valueOf(nif).length() != 9){
+                                nif = 0;
+                                JOptionPane.showMessageDialog(null, "Invalid VAT Number!", "VAT Validation", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }while (nif == 0);
                         String contact = Interactive.readString("Contact", "Create Client");
                         Client pp = new Client(nif, name, contact);
                         Address address = askAddress();
@@ -138,11 +145,22 @@ public class Clients {
     private static Address askAddress(){
         String street = Interactive.readString("Street", "Create Client");
         int door = Interactive.readInt("Door", "Create Client");
-        int ZipCode = Interactive.readInt("Zip Code", "Create Client");
+        int zipCode = 0;
+        do{
+           try{
+               String ZipCode = Interactive.readString("Zip Code", "Create Client").replace("-", "");
+               zipCode = Integer.parseInt(ZipCode);
+               if(ZipCode.length() != 7){
+                   JOptionPane.showMessageDialog(null, "ZIP Code with invalid format", "ZIP Code Validate", JOptionPane.ERROR_MESSAGE);
+                   zipCode = 0;
+               }
+           }catch (NumberFormatException nfe){
+               JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
+           }
+        }while (zipCode == 0);
         String Nlocality = Interactive.readString("Locality", "Create Client");
-        return new Address(street, door, ZipCode, Nlocality);
+        return new Address(street, door, zipCode, Nlocality);
     }
-
     private static void confirmPerson(Address address, Client clt, ArrayList<People> allPeople){
         if(clt.getNif() == 0 || Objects.equals(clt.getName(), "") || Objects.equals(clt.getContact(), "") || Objects.equals(address.getNstreet(), "") || address.getndoor() == 0 || address.getZipCode() == 0 || Objects.equals(address.getNlocality(), "")){
             JOptionPane.showMessageDialog(null, "Errors found. Please provide the information again!", "Typing error!", JOptionPane.ERROR_MESSAGE);

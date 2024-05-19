@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.stream.Stream;
 
 public class PDFGenerator {
+    private static final ZoneId z = ZoneId.of("Europe/Lisbon");
     public static void reportByVetAndDate(ArrayList<Appointment> apps, ArrayList<People> persons){
         Vet vetDataDay = null;
 
@@ -53,105 +54,124 @@ public class PDFGenerator {
             Document document = new Document();
             Date now = new Date();
             Long longTime = now.getTime()/1000;
-            String fileName = "vetDateReportByTypes-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            PdfPTable tableNormal = new PdfPTable(6);
-            PdfPTable tableVacination = new PdfPTable(6);
-            PdfPTable tableSurgery = new PdfPTable(6);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
 
-            Stream.of("Time Slot", "Animal Name (Chip ID)", "Owner (Contact)", "OnSite/Remote", "Specie", "Weight")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                        tableVacination.addCell(header);
-                        tableSurgery.addCell(header);
-                    });
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            for(int i = 0; i < apps.size(); i++){
-                if(apps.get(i).getVet().getIdOV() == vetDataDay.getIdOV() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().equals(lDateForVet.toLocalDate()))
-                    if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                        tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVetDay) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVetDay), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+
+                PdfPTable tableNormal = new PdfPTable(6);
+                PdfPTable tableVacination = new PdfPTable(6);
+                PdfPTable tableSurgery = new PdfPTable(6);
+
+                Stream.of("Time Slot", "Animal Name (Chip ID)", "Owner (Contact)", "OnSite/Remote", "Specie", "Weight")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                            tableVacination.addCell(header);
+                            tableSurgery.addCell(header);
+                        });
+
+                for(int i = 0; i < apps.size(); i++){
+                    if(apps.get(i).getVet().getIdOV() == vetDataDay.getIdOV() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().equals(lDateForVet.toLocalDate()))
+                        if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
+                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVetDay) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVetDay), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            Client clt = null;
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
-                        }
-                        tableNormal.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableNormal.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                    }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                        tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVetDay) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVetDay), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                            tableNormal.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableNormal.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                        }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
+                            tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVetDay) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVetDay), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            Client clt = null;
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
-                        }
-                        tableVacination.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableVacination.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                    }else{
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                            tableVacination.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableVacination.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                        }else{
+                            Client clt = null;
+                            for(People pp : persons){
+                                if(pp instanceof Client){
+                                    if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
+                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTimeVetDay) + " - " + sEnd.format(formatterTimeVetDay), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            tableSurgery.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableSurgery.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                            i += 3;
                         }
-                        LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTimeVetDay) + " - " + sEnd.format(formatterTimeVetDay), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        tableSurgery.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableSurgery.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                        i += 3;
-                    }
+                }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(10);
+                tableVacination.setWidthPercentage(100);
+                tableVacination.setSpacingBefore(10);
+                tableSurgery.setWidthPercentage(100);
+                tableSurgery.setSpacingBefore(10);
+
+                document.add(new Paragraph("CliPlus - Vet and Date Report By Types", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Interventions for " + vetDataDay.getName() + " (" + vetDataDay.getIdOV() + ") at " + lDateForVet.toLocalDate().format(formatterDayVet), font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Normal", font));
+                document.add(tableNormal);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Vacination", font));
+                document.add(tableVacination);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Surgery", font));
+                document.add(tableSurgery);
+
+                DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtCh = LocalDateTime.now(z);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Report created at " + dtCh.format(formatterTime), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
 
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(10);
-            tableVacination.setWidthPercentage(100);
-            tableVacination.setSpacingBefore(10);
-            tableSurgery.setWidthPercentage(100);
-            tableSurgery.setSpacingBefore(10);
-
-            document.add(new Paragraph("CliPlus - Vet and Date Report By Types", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Interventions for " + vetDataDay.getName() + " (" + vetDataDay.getIdOV() + ") at " + lDateForVet.toLocalDate().format(formatterDayVet), font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Normal", font));
-            document.add(tableNormal);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Vacination", font));
-            document.add(tableVacination);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Surgery", font));
-            document.add(tableSurgery);
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -183,109 +203,123 @@ public class PDFGenerator {
         }
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "vetReportByTypes-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            PdfPTable tableNormal = new PdfPTable(6);
-            PdfPTable tableVacination = new PdfPTable(6);
-            PdfPTable tableSurgery = new PdfPTable(6);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            Stream.of("Time Slot", "Animal Name (Chip ID)", "Owner (Contact)", "OnSite/Remote", "Specie", "Weight")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                        tableVacination.addCell(header);
-                        tableSurgery.addCell(header);
-                    });
+                PdfPTable tableNormal = new PdfPTable(6);
+                PdfPTable tableVacination = new PdfPTable(6);
+                PdfPTable tableSurgery = new PdfPTable(6);
 
-            for(int i = 0; i < apps.size(); i++){
-                if(apps.get(i).getVet().getIdOV() == vetData.getIdOV()){
-                    if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                        tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVet) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVet), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                Stream.of("Time Slot", "Animal Name (Chip ID)", "Owner (Contact)", "OnSite/Remote", "Specie", "Weight")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                            tableVacination.addCell(header);
+                            tableSurgery.addCell(header);
+                        });
+
+                for (int i = 0; i < apps.size(); i++) {
+                    if (apps.get(i).getVet().getIdOV() == vetData.getIdOV()) {
+                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVet) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVet), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            Client clt = null;
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    if (((Client) pp).getAnimals().contains(apps.get(i).getAnimal())) {
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
-                        }
-                        tableNormal.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableNormal.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                    }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                        tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVet) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVet), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                            tableNormal.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableNormal.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                        } else if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                            tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTimeVet) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTimeVet), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            Client clt = null;
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    if (((Client) pp).getAnimals().contains(apps.get(i).getAnimal())) {
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
-                        }
-                        tableVacination.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableVacination.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                    }else{
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                            tableVacination.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableVacination.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                        } else {
+                            Client clt = null;
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    if (((Client) pp).getAnimals().contains(apps.get(i).getAnimal())) {
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
+                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTimeVet) + " - " + sEnd.format(formatterTimeVet), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            tableSurgery.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableSurgery.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                            i += 3;
                         }
-                        LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTimeVet) + " - " + sEnd.format(formatterTimeVet), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        tableSurgery.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableSurgery.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                        i += 3;
                     }
                 }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(10);
+                tableVacination.setWidthPercentage(100);
+                tableVacination.setSpacingBefore(10);
+                tableSurgery.setWidthPercentage(100);
+                tableSurgery.setSpacingBefore(10);
+
+                document.add(new Paragraph("CliPlus - Vet Report By Types", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Interventions for " + vetData.getName() + " (" + vetData.getIdOV() + ")", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Normal", font));
+                document.add(tableNormal);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Vacination", font));
+                document.add(tableVacination);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Surgery", font));
+                document.add(tableSurgery);
+                DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtCh = LocalDateTime.now(z);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Report created at " + dtCh.format(formatterTime), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(10);
-            tableVacination.setWidthPercentage(100);
-            tableVacination.setSpacingBefore(10);
-            tableSurgery.setWidthPercentage(100);
-            tableSurgery.setSpacingBefore(10);
-
-            document.add(new Paragraph("CliPlus - Vet Report By Types", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Interventions for " + vetData.getName() + " (" + vetData.getIdOV() + ")", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Normal", font));
-            document.add(tableNormal);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Vacination", font));
-            document.add(tableVacination);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Surgery", font));
-            document.add(tableSurgery);
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -302,112 +336,128 @@ public class PDFGenerator {
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "dayReportByTypes-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            PdfPTable tableNormal = new PdfPTable(7);
-            PdfPTable tableVacination = new PdfPTable(7);
-            PdfPTable tableSurgery = new PdfPTable(7);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            Stream.of("Time Slot", "Vet Name", "Animal Name (Chip ID)", "Owner (Contact)", "OnSite/Remote", "Specie", "Weight")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                        tableVacination.addCell(header);
-                        tableSurgery.addCell(header);
-                    });
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            for(int i = 0; i < apps.size(); i++){
-                if(apps.get(i).getTimeSlot().getStartTime().toLocalDate().equals(lDate.toLocalDate())){
-                    if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                        tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                PdfPTable tableNormal = new PdfPTable(7);
+                PdfPTable tableVacination = new PdfPTable(7);
+                PdfPTable tableSurgery = new PdfPTable(7);
+
+                Stream.of("Time Slot", "Vet Name", "Animal Name (Chip ID)", "Owner (Contact)", "OnSite/Remote", "Specie", "Weight")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                            tableVacination.addCell(header);
+                            tableSurgery.addCell(header);
+                        });
+
+                for (int i = 0; i < apps.size(); i++) {
+                    if (apps.get(i).getTimeSlot().getStartTime().toLocalDate().equals(lDate.toLocalDate())) {
+                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            Client clt = null;
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    if (((Client) pp).getAnimals().contains(apps.get(i).getAnimal())) {
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
-                        }
-                        tableNormal.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableNormal.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                    }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                        tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                            tableNormal.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableNormal.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                        } else if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                            tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            Client clt = null;
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    if (((Client) pp).getAnimals().contains(apps.get(i).getAnimal())) {
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
-                        }
-                        tableVacination.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableVacination.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                    }else{
-                        Client clt = null;
-                        for(People pp : persons){
-                            if(pp instanceof Client){
-                                if(((Client) pp).getAnimals().contains(apps.get(i).getAnimal())){
-                                    clt = (Client) pp;
+                            tableVacination.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableVacination.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                        } else {
+                            Client clt = null;
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    if (((Client) pp).getAnimals().contains(apps.get(i).getAnimal())) {
+                                        clt = (Client) pp;
+                                    }
                                 }
                             }
+                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                            tableSurgery.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
+                            tableSurgery.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
+                            i += 3;
                         }
-                        LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                        tableSurgery.addCell(new Paragraph(clt.getName() + " (" + clt.getContact() + ")", fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAnimal().getSpecie(), fontTable));
-                        tableSurgery.addCell(new Paragraph(String.valueOf(apps.get(i).getAnimal().getWeight()), fontTable));
-                        i += 3;
                     }
                 }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(10);
+                tableVacination.setWidthPercentage(100);
+                tableVacination.setSpacingBefore(10);
+                tableSurgery.setWidthPercentage(100);
+                tableSurgery.setSpacingBefore(10);
+
+                document.add(new Paragraph("CliPlus - Day Report By Types", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Interventions at " + lDate.toLocalDate().format(formatterDay), font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Normal", font));
+                document.add(tableNormal);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Vacination", font));
+                document.add(tableVacination);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Surgery", font));
+                document.add(tableSurgery);
+                DateTimeFormatter formatterTimeSig = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtCh = LocalDateTime.now(z);
+
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Report created at " + dtCh.format(formatterTimeSig), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(10);
-            tableVacination.setWidthPercentage(100);
-            tableVacination.setSpacingBefore(10);
-            tableSurgery.setWidthPercentage(100);
-            tableSurgery.setSpacingBefore(10);
-
-            document.add(new Paragraph("CliPlus - Day Report By Types", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Interventions at " + lDate.toLocalDate().format(formatterDay), font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Normal", font));
-            document.add(tableNormal);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Vacination", font));
-            document.add(tableVacination);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Surgery", font));
-            document.add(tableSurgery);
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -418,83 +468,96 @@ public class PDFGenerator {
     }
     public static void reportPastInterventionsByAnimal(ArrayList<Appointment> apps, Animal anm, Client clt){
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime dtCh = LocalDateTime.now(z).minusDays(1);
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "animalPastReportByTypes-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            PdfPTable tableNormal = new PdfPTable(3);
-            PdfPTable tableVacination = new PdfPTable(3);
-            PdfPTable tableSurgery = new PdfPTable(3);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            Stream.of("Time Slot", "Vet Name", "OnSite/Remote")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                        tableVacination.addCell(header);
-                        tableSurgery.addCell(header);
-                    });
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            for(int i = 0; i < apps.size(); i++){
-                if(apps.get(i).getAnimal().getId() == anm.getId() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().isBefore(dtCh.toLocalDate())){
-                    if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                        tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                    }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                        tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                    }else{
-                        LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        i += 3;
+                PdfPTable tableNormal = new PdfPTable(3);
+                PdfPTable tableVacination = new PdfPTable(3);
+                PdfPTable tableSurgery = new PdfPTable(3);
+
+                Stream.of("Time Slot", "Vet Name", "OnSite/Remote")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                            tableVacination.addCell(header);
+                            tableSurgery.addCell(header);
+                        });
+
+                for (int i = 0; i < apps.size(); i++) {
+                    if (apps.get(i).getAnimal().getId() == anm.getId() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().isBefore(dtCh.toLocalDate())) {
+                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                        } else if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                            tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                        } else {
+                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            i += 3;
+                        }
                     }
                 }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(10);
+                tableVacination.setWidthPercentage(100);
+                tableVacination.setSpacingBefore(10);
+                tableSurgery.setWidthPercentage(100);
+                tableSurgery.setSpacingBefore(10);
+
+                document.add(new Paragraph("CliPlus - Past Animal Interventions Report By Types", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Interventions for " + anm.getName() + " (" + anm.getId() + ")", font));
+                document.add(new Paragraph("Owner: " + clt.getName(), font));
+                document.add(new Paragraph("Specie: " + anm.getSpecie(), font));
+                document.add(new Paragraph("Weight: " + anm.getWeight(), font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Normal", font));
+                document.add(tableNormal);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Vacination", font));
+                document.add(tableVacination);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Surgery", font));
+                document.add(tableSurgery);
+                DateTimeFormatter formatterTimeSig = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime sign = LocalDateTime.now(z);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Report created at " + sign.format(formatterTimeSig), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + fileName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(10);
-            tableVacination.setWidthPercentage(100);
-            tableVacination.setSpacingBefore(10);
-            tableSurgery.setWidthPercentage(100);
-            tableSurgery.setSpacingBefore(10);
-
-            document.add(new Paragraph("CliPlus - Past Animal Interventions Report By Types", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Interventions for " + anm.getName() + " (" + anm.getId() + ")", font));
-            document.add(new Paragraph("Owner: " + clt.getName(), font));
-            document.add(new Paragraph("Specie: " + anm.getSpecie(), font));
-            document.add(new Paragraph("Weight: " + anm.getWeight(), font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Normal", font));
-            document.add(tableNormal);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Vacination", font));
-            document.add(tableVacination);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Surgery", font));
-            document.add(tableSurgery);
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -505,83 +568,97 @@ public class PDFGenerator {
     }
     public static void reportTodayInterventionsByAnimal(ArrayList<Appointment> apps, Animal anm, Client clt){
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime dtCh = LocalDateTime.now(z);
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "animalTodayReportByTypes-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            PdfPTable tableNormal = new PdfPTable(3);
-            PdfPTable tableVacination = new PdfPTable(3);
-            PdfPTable tableSurgery = new PdfPTable(3);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            Stream.of("Time Slot", "Vet Name", "OnSite/Remote")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                        tableVacination.addCell(header);
-                        tableSurgery.addCell(header);
-                    });
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            for(int i = 0; i < apps.size(); i++){
-                if(apps.get(i).getAnimal().getId() == anm.getId() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().equals(dtCh.toLocalDate())){
-                    if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                        tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                    }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                        tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                    }else{
-                        LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        i += 3;
+                PdfPTable tableNormal = new PdfPTable(3);
+                PdfPTable tableVacination = new PdfPTable(3);
+                PdfPTable tableSurgery = new PdfPTable(3);
+
+                Stream.of("Time Slot", "Vet Name", "OnSite/Remote")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                            tableVacination.addCell(header);
+                            tableSurgery.addCell(header);
+                        });
+
+                for (int i = 0; i < apps.size(); i++) {
+                    if (apps.get(i).getAnimal().getId() == anm.getId() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().equals(dtCh.toLocalDate())) {
+                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                        } else if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                            tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                        } else {
+                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            i += 3;
+                        }
                     }
                 }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(10);
+                tableVacination.setWidthPercentage(100);
+                tableVacination.setSpacingBefore(10);
+                tableSurgery.setWidthPercentage(100);
+                tableSurgery.setSpacingBefore(10);
+
+                document.add(new Paragraph("CliPlus - Today Animal Interventions Report By Types", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Interventions for " + anm.getName() + " (" + anm.getId() + ")", font));
+                document.add(new Paragraph("Owner: " + clt.getName(), font));
+                document.add(new Paragraph("Specie: " + anm.getSpecie(), font));
+                document.add(new Paragraph("Weight: " + anm.getWeight(), font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Normal", font));
+                document.add(tableNormal);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Vacination", font));
+                document.add(tableVacination);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Surgery", font));
+                document.add(tableSurgery);
+                DateTimeFormatter formatterTimeSign = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtChSign = LocalDateTime.now(z);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Report created at " + dtChSign.format(formatterTimeSign), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(10);
-            tableVacination.setWidthPercentage(100);
-            tableVacination.setSpacingBefore(10);
-            tableSurgery.setWidthPercentage(100);
-            tableSurgery.setSpacingBefore(10);
-
-            document.add(new Paragraph("CliPlus - Today Animal Interventions Report By Types", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Interventions for " + anm.getName() + " (" + anm.getId() + ")", font));
-            document.add(new Paragraph("Owner: " + clt.getName(), font));
-            document.add(new Paragraph("Specie: " + anm.getSpecie(), font));
-            document.add(new Paragraph("Weight: " + anm.getWeight(), font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Normal", font));
-            document.add(tableNormal);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Vacination", font));
-            document.add(tableVacination);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Surgery", font));
-            document.add(tableSurgery);
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -593,83 +670,97 @@ public class PDFGenerator {
 
     public static void reportFutureInterventionsByAnimal(ArrayList<Appointment> apps, Animal anm, Client clt){
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime dtCh = LocalDateTime.now(z).plusDays(1);
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "animalFutureReportByTypes-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            PdfPTable tableNormal = new PdfPTable(3);
-            PdfPTable tableVacination = new PdfPTable(3);
-            PdfPTable tableSurgery = new PdfPTable(3);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            Stream.of("Time Slot", "Vet Name", "OnSite/Remote")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                        tableVacination.addCell(header);
-                        tableSurgery.addCell(header);
-                    });
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            for(int i = 0; i < apps.size(); i++){
-                if(apps.get(i).getAnimal().getId() == anm.getId() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().isAfter(dtCh.toLocalDate())){
-                    if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                        tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                    }else if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                        tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                    }else{
-                        LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                        tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                        i += 3;
+                PdfPTable tableNormal = new PdfPTable(3);
+                PdfPTable tableVacination = new PdfPTable(3);
+                PdfPTable tableSurgery = new PdfPTable(3);
+
+                Stream.of("Time Slot", "Vet Name", "OnSite/Remote")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                            tableVacination.addCell(header);
+                            tableSurgery.addCell(header);
+                        });
+
+                for (int i = 0; i < apps.size(); i++) {
+                    if (apps.get(i).getAnimal().getId() == anm.getId() && apps.get(i).getTimeSlot().getStartTime().toLocalDate().isAfter(dtCh.toLocalDate())) {
+                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                        } else if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                            tableVacination.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableVacination.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                        } else {
+                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                            tableSurgery.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                            i += 3;
+                        }
                     }
                 }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(10);
+                tableVacination.setWidthPercentage(100);
+                tableVacination.setSpacingBefore(10);
+                tableSurgery.setWidthPercentage(100);
+                tableSurgery.setSpacingBefore(10);
+
+                document.add(new Paragraph("CliPlus - Future Animal Interventions Report By Types", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Interventions for " + anm.getName() + " (" + anm.getId() + ")", font));
+                document.add(new Paragraph("Owner: " + clt.getName(), font));
+                document.add(new Paragraph("Specie: " + anm.getSpecie(), font));
+                document.add(new Paragraph("Weight: " + anm.getWeight(), font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Normal", font));
+                document.add(tableNormal);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Vacination", font));
+                document.add(tableVacination);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Surgery", font));
+                document.add(tableSurgery);
+                DateTimeFormatter formatterTimeZone = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtChSign = LocalDateTime.now(z);
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Report created at " + dtChSign.format(formatterTimeZone), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(10);
-            tableVacination.setWidthPercentage(100);
-            tableVacination.setSpacingBefore(10);
-            tableSurgery.setWidthPercentage(100);
-            tableSurgery.setSpacingBefore(10);
-
-            document.add(new Paragraph("CliPlus - Future Animal Interventions Report By Types", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Interventions for " + anm.getName() + " (" + anm.getId() + ")", font));
-            document.add(new Paragraph("Owner: " + clt.getName(), font));
-            document.add(new Paragraph("Specie: " + anm.getSpecie(), font));
-            document.add(new Paragraph("Weight: " + anm.getWeight(), font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Normal", font));
-            document.add(tableNormal);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Vacination", font));
-            document.add(tableVacination);
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Surgery", font));
-            document.add(tableSurgery);
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -680,126 +771,140 @@ public class PDFGenerator {
     }
 
     public static void reportTodayAndPastCostsByClient(ArrayList<Appointment> apps, ArrayList<Animal> anms, Client clt){
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime dtCh = LocalDateTime.now(z);
 
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "lastCostsClientReport-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            document.add(new Paragraph("CliPlus - Last Costs By Client", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Costs for " + clt.getName() + " (" + clt.getNif() + ")", font));
-            document.add(new Paragraph("Contact: " + clt.getContact(), font));
-            document.add(new Paragraph("Address Line One: " + clt.getAddress().getNstreet() + ", nº" + clt.getAddress().getndoor(), font));
-            StringBuilder sb = new StringBuilder();
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            String ccPostal = Integer.toString(clt.getAddress().getZipCode());
-            char[] ccPostalArr = ccPostal.toCharArray();
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            for (int i = 0; i < ccPostalArr.length; i++) {
-                if(i == 3){
-                    sb.append(ccPostalArr[i]).append("-");
-                }else{
-                    sb.append(ccPostalArr[i]);
+                document.add(new Paragraph("CliPlus - Last Costs By Client", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Costs for " + clt.getName() + " (" + clt.getNif() + ")", font));
+                document.add(new Paragraph("Contact: " + clt.getContact(), font));
+                document.add(new Paragraph("Address Line One: " + clt.getAddress().getNstreet() + ", nº" + clt.getAddress().getndoor(), font));
+                StringBuilder sb = new StringBuilder();
+
+                String ccPostal = Integer.toString(clt.getAddress().getZipCode());
+                char[] ccPostalArr = ccPostal.toCharArray();
+
+                for (int i = 0; i < ccPostalArr.length; i++) {
+                    if (i == 3) {
+                        sb.append(ccPostalArr[i]).append("-");
+                    } else {
+                        sb.append(ccPostalArr[i]);
+                    }
                 }
-            }
 
-            document.add(new Paragraph("Address Line Two: " + clt.getAddress().getNlocality() + " (" + sb.toString() + ")", font));
-            document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Address Line Two: " + clt.getAddress().getNlocality() + " (" + sb.toString() + ")", font));
+                document.add(Chunk.createWhitespace(""));
 
-            double masterTotal = 0;
-            for(Animal anm : anms){
-                PdfPTable tableNormal = new PdfPTable(5);
-                double animalTotal = 0;
-                Stream.of("Time Slot", "Vet Name", "Appointment Type", "OnSite/Remote", "Total")
-                        .forEach(columnTitle -> {
-                            PdfPCell header = new PdfPCell();
-                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                            header.setBorderWidth(1);
-                            header.setPhrase(new Paragraph(columnTitle, fontTable));
-                            tableNormal.addCell(header);
-                        });
-                for(int i = 0; i < apps.size(); i++){
-                    if(apps.get(i).getAnimal().getId() == anm.getId()){
-                        if(apps.get(i).getTimeSlot().getStartTime().isBefore(dtCh)){
-                            double totalToPay = 0;
+                double masterTotal = 0;
+                for (Animal anm : anms) {
+                    PdfPTable tableNormal = new PdfPTable(5);
+                    double animalTotal = 0;
+                    Stream.of("Time Slot", "Vet Name", "Appointment Type", "OnSite/Remote", "Total")
+                            .forEach(columnTitle -> {
+                                PdfPCell header = new PdfPCell();
+                                header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                                header.setBorderWidth(1);
+                                header.setPhrase(new Paragraph(columnTitle, fontTable));
+                                tableNormal.addCell(header);
+                            });
+                    for (int i = 0; i < apps.size(); i++) {
+                        if (apps.get(i).getAnimal().getId() == anm.getId()) {
+                            if (apps.get(i).getTimeSlot().getStartTime().isBefore(dtCh)) {
+                                double totalToPay = 0;
 
-                            if(apps.get(i).getAppoLocal() == Appointment.AppointmentLocation.Remote){
-                                totalToPay = 40 + apps.get(i).getDistance();
-                            }
-
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery){
-                                if(anm.getWeight() >= 10){
-                                    totalToPay += 400;
-                                }else{
-                                    totalToPay += 200;
+                                if (apps.get(i).getAppoLocal() == Appointment.AppointmentLocation.Remote) {
+                                    totalToPay = 40 + apps.get(i).getDistance();
                                 }
-                            }
 
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                                if(anm.getWeight() >= 10){
-                                    totalToPay += 50;
-                                }else{
-                                    totalToPay += 100;
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
+                                    if (anm.getWeight() >= 10) {
+                                        totalToPay += 400;
+                                    } else {
+                                        totalToPay += 200;
+                                    }
                                 }
-                            }
 
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                                if(anm.getWeight() >= 10){
-                                    totalToPay += 25;
-                                }else{
-                                    totalToPay += 50;
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                                    if (anm.getWeight() >= 10) {
+                                        totalToPay += 50;
+                                    } else {
+                                        totalToPay += 100;
+                                    }
                                 }
-                            }
 
-                            totalToPay *= 1.23;
-                            animalTotal += totalToPay;
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                                    if (anm.getWeight() >= 10) {
+                                        totalToPay += 25;
+                                    } else {
+                                        totalToPay += 50;
+                                    }
+                                }
 
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery){
-                                LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                                tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(String.valueOf(totalToPay), fontTable));
-                                i += 3;
-                            }else{
-                                tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                                totalToPay *= 1.23;
+                                animalTotal += totalToPay;
+
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
+                                    LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(String.valueOf(totalToPay), fontTable));
+                                    i += 3;
+                                } else {
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                                }
                             }
                         }
                     }
+                    tableNormal.setWidthPercentage(100);
+                    tableNormal.setSpacingBefore(10);
+
+                    document.add(new Paragraph(anm.getName() + " (" + anm.getId() + ") - " + anm.getSpecie(), font));
+                    document.add(tableNormal);
+                    document.add(new Paragraph("Animal Report Total: " + animalTotal + " €", fontTable));
+                    document.add(Chunk.createWhitespace(""));
+                    masterTotal += animalTotal;
                 }
-                tableNormal.setWidthPercentage(100);
-                tableNormal.setSpacingBefore(10);
 
-                document.add(new Paragraph(anm.getName() + " (" + anm.getId() + ") - " + anm.getSpecie(), font));
-                document.add(tableNormal);
-                document.add(new Paragraph("Animal Report Total: " + animalTotal + " €", fontTable));
+                document.add(new Paragraph("Client Total: " + String.valueOf(masterTotal) + " €", font));
+                DateTimeFormatter formatterTimeSign = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtChSign = LocalDateTime.now(z);
                 document.add(Chunk.createWhitespace(""));
-                masterTotal += animalTotal;
+                document.add(new Paragraph("Report created at " + dtChSign.format(formatterTimeSign), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            document.add(new Paragraph("Client Total: " + String.valueOf(masterTotal) + " €", font));
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -809,126 +914,140 @@ public class PDFGenerator {
         }
     }
     public static void reportFutureCostsByClient(ArrayList<Appointment> apps, ArrayList<Animal> anms, Client clt){
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime dtCh = LocalDateTime.now(z).plusDays(1);
 
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "futureCostsClientReport-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
+            String fileName = "report-" + longTime + ".pdf";
+            String internalName = "report-" + longTime;
+            JFileChooser fc = new JFileChooser();
 
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            document.add(new Paragraph("CliPlus - Future Costs By Client", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Costs for " + clt.getName() + " (" + clt.getNif() + ")", font));
-            document.add(new Paragraph("Contact: " + clt.getContact(), font));
-            document.add(new Paragraph("Address Line One: " + clt.getAddress().getNstreet() + ", nº" + clt.getAddress().getndoor(), font));
-            StringBuilder sb = new StringBuilder();
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
 
-            String ccPostal = Integer.toString(clt.getAddress().getZipCode());
-            char[] ccPostalArr = ccPostal.toCharArray();
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            for (int i = 0; i < ccPostalArr.length; i++) {
-                if(i == 3){
-                    sb.append(ccPostalArr[i]).append("-");
-                }else{
-                    sb.append(ccPostalArr[i]);
+                document.add(new Paragraph("CliPlus - Future Costs By Client", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Costs for " + clt.getName() + " (" + clt.getNif() + ")", font));
+                document.add(new Paragraph("Contact: " + clt.getContact(), font));
+                document.add(new Paragraph("Address Line One: " + clt.getAddress().getNstreet() + ", nº" + clt.getAddress().getndoor(), font));
+                StringBuilder sb = new StringBuilder();
+
+                String ccPostal = Integer.toString(clt.getAddress().getZipCode());
+                char[] ccPostalArr = ccPostal.toCharArray();
+
+                for (int i = 0; i < ccPostalArr.length; i++) {
+                    if (i == 3) {
+                        sb.append(ccPostalArr[i]).append("-");
+                    } else {
+                        sb.append(ccPostalArr[i]);
+                    }
                 }
-            }
 
-            document.add(new Paragraph("Address Line Two: " + clt.getAddress().getNlocality() + " (" + sb.toString() + ")", font));
-            document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Address Line Two: " + clt.getAddress().getNlocality() + " (" + sb.toString() + ")", font));
+                document.add(Chunk.createWhitespace(""));
 
-            double masterTotal = 0;
-            for(Animal anm : anms){
-                PdfPTable tableNormal = new PdfPTable(5);
-                double animalTotal = 0;
-                Stream.of("Time Slot", "Vet Name", "Appointment Type", "OnSite/Remote", "Total")
-                        .forEach(columnTitle -> {
-                            PdfPCell header = new PdfPCell();
-                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                            header.setBorderWidth(1);
-                            header.setPhrase(new Paragraph(columnTitle, fontTable));
-                            tableNormal.addCell(header);
-                        });
-                for(int i = 0; i < apps.size(); i++){
-                    if(apps.get(i).getAnimal().getId() == anm.getId()){
-                        if(apps.get(i).getTimeSlot().getStartTime().isAfter(dtCh)){
-                            double totalToPay = 0;
+                double masterTotal = 0;
+                for (Animal anm : anms) {
+                    PdfPTable tableNormal = new PdfPTable(5);
+                    double animalTotal = 0;
+                    Stream.of("Time Slot", "Vet Name", "Appointment Type", "OnSite/Remote", "Total")
+                            .forEach(columnTitle -> {
+                                PdfPCell header = new PdfPCell();
+                                header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                                header.setBorderWidth(1);
+                                header.setPhrase(new Paragraph(columnTitle, fontTable));
+                                tableNormal.addCell(header);
+                            });
+                    for (int i = 0; i < apps.size(); i++) {
+                        if (apps.get(i).getAnimal().getId() == anm.getId()) {
+                            if (apps.get(i).getTimeSlot().getStartTime().isAfter(dtCh)) {
+                                double totalToPay = 0;
 
-                            if(apps.get(i).getAppoLocal() == Appointment.AppointmentLocation.Remote){
-                                totalToPay = 40 + apps.get(i).getDistance();
-                            }
-
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery){
-                                if(anm.getWeight() >= 10){
-                                    totalToPay += 400;
-                                }else{
-                                    totalToPay += 200;
+                                if (apps.get(i).getAppoLocal() == Appointment.AppointmentLocation.Remote) {
+                                    totalToPay = 40 + apps.get(i).getDistance();
                                 }
-                            }
 
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination){
-                                if(anm.getWeight() >= 10){
-                                    totalToPay += 50;
-                                }else{
-                                    totalToPay += 100;
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
+                                    if (anm.getWeight() >= 10) {
+                                        totalToPay += 400;
+                                    } else {
+                                        totalToPay += 200;
+                                    }
                                 }
-                            }
 
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation){
-                                if(anm.getWeight() >= 10){
-                                    totalToPay += 25;
-                                }else{
-                                    totalToPay += 50;
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                                    if (anm.getWeight() >= 10) {
+                                        totalToPay += 50;
+                                    } else {
+                                        totalToPay += 100;
+                                    }
                                 }
-                            }
 
-                            totalToPay *= 1.23;
-                            animalTotal += totalToPay;
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                                    if (anm.getWeight() >= 10) {
+                                        totalToPay += 25;
+                                    } else {
+                                        totalToPay += 50;
+                                    }
+                                }
 
-                            if(apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery){
-                                LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                                tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
-                                i += 3;
-                            }else{
-                                tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
-                                tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                                totalToPay *= 1.23;
+                                animalTotal += totalToPay;
+
+                                if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
+                                    LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                                    i += 3;
+                                } else {
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
+                                    tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                                }
                             }
                         }
                     }
+                    tableNormal.setWidthPercentage(100);
+                    tableNormal.setSpacingBefore(10);
+
+                    document.add(new Paragraph(anm.getName() + " (" + anm.getId() + ") - " + anm.getSpecie(), font));
+                    document.add(tableNormal);
+                    document.add(new Paragraph("Animal Report Total: " + animalTotal + " €", fontTable));
+                    document.add(Chunk.createWhitespace(""));
+                    masterTotal += animalTotal;
                 }
-                tableNormal.setWidthPercentage(100);
-                tableNormal.setSpacingBefore(10);
 
-                document.add(new Paragraph(anm.getName() + " (" + anm.getId() + ") - " + anm.getSpecie(), font));
-                document.add(tableNormal);
-                document.add(new Paragraph("Animal Report Total: " + animalTotal + " €", fontTable));
+                document.add(new Paragraph("Client Total: " + String.valueOf(masterTotal) + " €", font));
+                DateTimeFormatter formatterTimeSign = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtChSign = LocalDateTime.now(z);
                 document.add(Chunk.createWhitespace(""));
-                masterTotal += animalTotal;
+                document.add(new Paragraph("Report created at " + dtChSign.format(formatterTimeSign), fontTable));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            document.add(new Paragraph("Client Total: " + String.valueOf(masterTotal) + " €", font));
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {
@@ -942,133 +1061,145 @@ public class PDFGenerator {
         LocalDateTime lDateStart = Interactive.readDate("Generate Invoice - Start Date", true, false);
         LocalDateTime lDateEnd = Interactive.readDate("Generate Invoice - End Date", true, false);
         DateTimeFormatter formatterTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime dtCh = LocalDateTime.now(z);
 
         try{
-            Document document = new Document();
             Date now = new Date();
-            Long longTime = now.getTime()/1000;
-            String fileName = "Invoice-" + longTime + ".pdf";
-            PdfWriter.getInstance(document, new FileOutputStream(fileName));
-
-            document.open();
-            Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-            Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
-
+            Long longTime = now.getTime() / 1000;
+            Document document = new Document();
             String nInvoice = Files.readData("invoices.txt").trim();
             int codeToShow = Integer.parseInt(nInvoice);
+            String fileName = "Invoice FT" +  Calendar.getInstance().get(Calendar.YEAR) + "-" + codeToShow + ".pdf";
+            String internalName = "Invoice FT" +  Calendar.getInstance().get(Calendar.YEAR) + "/" + codeToShow;
+            JFileChooser fc = new JFileChooser();
 
-            document.add(new Paragraph("CliPlus - Invoice " + Calendar.getInstance().get(Calendar.YEAR) + "/" + codeToShow, font));
-            document.add(new Paragraph("AT-CUD: CBR600MT07-" + codeToShow, font));
+            fc.setDialogTitle("Save Report");
+            fc.setCurrentDirectory(new File("."));
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setSelectedFile(new File(fileName));
+            int returnVal = fc.showSaveDialog(null);
 
-            Files.saveData("invoices.txt", String.valueOf(codeToShow+1));
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File pdfFile = fc.getSelectedFile();
+                PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
+                document.open();
+                Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+                Font fontTable = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLACK);
 
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph("Exmo(a), Sr(a) " + clt.getName(), font));
-            document.add(new Paragraph("VAT: " + clt.getNif(), font));
-            document.add(new Paragraph("Contact: " + clt.getContact(), font));
-            document.add(new Paragraph("Address Line One: " + clt.getAddress().getNstreet() + ", nº" + clt.getAddress().getndoor(), font));
-            StringBuilder sb = new StringBuilder();
+                DateTimeFormatter formatterTimeIssued = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dtChIssued = LocalDateTime.now(z);
 
-            String ccPostal = Integer.toString(clt.getAddress().getZipCode());
-            char[] ccPostalArr = ccPostal.toCharArray();
+                document.add(new Paragraph("CliPlus - Invoice " + Calendar.getInstance().get(Calendar.YEAR) + "/" + codeToShow, font));
+                document.add(new Paragraph("AT-CUD: CBR600MT07-" + codeToShow, font));
+                document.add(new Paragraph("Issued At: " + dtChIssued.format(formatterTimeIssued), font));
 
-            for (int i = 0; i < ccPostalArr.length; i++) {
-                if(i == 3){
-                    sb.append(ccPostalArr[i]).append("-");
-                }else{
-                    sb.append(ccPostalArr[i]);
+                Files.saveData("invoices.txt", String.valueOf(codeToShow + 1));
+
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Exmo(a), Sr(a) " + clt.getName(), font));
+                document.add(new Paragraph("VAT: " + clt.getNif(), font));
+                document.add(new Paragraph("Contact: " + clt.getContact(), font));
+                document.add(new Paragraph("Address Line One: " + clt.getAddress().getNstreet() + ", nº" + clt.getAddress().getndoor(), font));
+                StringBuilder sb = new StringBuilder();
+
+                String ccPostal = Integer.toString(clt.getAddress().getZipCode());
+                char[] ccPostalArr = ccPostal.toCharArray();
+
+                for (int i = 0; i < ccPostalArr.length; i++) {
+                    if (i == 3) {
+                        sb.append(ccPostalArr[i]).append("-");
+                    } else {
+                        sb.append(ccPostalArr[i]);
+                    }
                 }
-            }
 
-            document.add(new Paragraph("Address Line Two: " + clt.getAddress().getNlocality() + " (" + sb.toString() + ")", font));
-            document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph("Address Line Two: " + clt.getAddress().getNlocality() + " (" + sb.toString() + ")", font));
+                document.add(Chunk.createWhitespace(""));
 
-            PdfPTable tableNormal = new PdfPTable(7);
+                PdfPTable tableNormal = new PdfPTable(7);
 
-            Stream.of("Time Slot", "Animal Name", "Vet Name", "Appointment Type", "Distance", "OnSite/Remote", "Total")
-                    .forEach(columnTitle -> {
-                        PdfPCell header = new PdfPCell();
-                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                        header.setBorderWidth(1);
-                        header.setPhrase(new Paragraph(columnTitle, fontTable));
-                        tableNormal.addCell(header);
-                    });
+                Stream.of("Time Slot", "Animal Name", "Vet Name", "Appointment Type", "Distance", "OnSite/Remote", "Total")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Paragraph(columnTitle, fontTable));
+                            tableNormal.addCell(header);
+                        });
 
-            double total = 0;
-            for(int i = 0; i < apps.size(); i++) {
-                if ((apps.get(i).getTimeSlot().getStartTime().toLocalDate().isAfter(lDateStart.toLocalDate().minusDays(1)) && apps.get(i).getTimeSlot().getEndTime().toLocalDate().isBefore(lDateEnd.toLocalDate())) || apps.get(i).getTimeSlot().getStartTime().toLocalDate().isEqual(dtCh.toLocalDate())) {
-                    if (apps.get(i).getAnimal().getId() == anm.getId()) {
+                double total = 0;
+                for (int i = 0; i < apps.size(); i++) {
+                    if ((apps.get(i).getTimeSlot().getStartTime().toLocalDate().isAfter(lDateStart.toLocalDate().minusDays(1)) && apps.get(i).getTimeSlot().getEndTime().toLocalDate().isBefore(lDateEnd.toLocalDate())) || apps.get(i).getTimeSlot().getStartTime().toLocalDate().isEqual(dtCh.toLocalDate())) {
+                        if (apps.get(i).getAnimal().getId() == anm.getId()) {
 
-                        double totalToPay = 0;
+                            double totalToPay = 0;
 
-                        if (apps.get(i).getAppoLocal() == Appointment.AppointmentLocation.Remote) {
-                            totalToPay = 40 + apps.get(i).getDistance();
-                        }
-
-                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
-                            if (anm.getWeight() >= 10) {
-                                totalToPay += 400;
-                            } else {
-                                totalToPay += 200;
+                            if (apps.get(i).getAppoLocal() == Appointment.AppointmentLocation.Remote) {
+                                totalToPay = 40 + apps.get(i).getDistance();
                             }
-                        }
 
-                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
-                            if (anm.getWeight() >= 10) {
-                                totalToPay += 50;
-                            } else {
-                                totalToPay += 100;
+                            if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
+                                if (anm.getWeight() >= 10) {
+                                    totalToPay += 400;
+                                } else {
+                                    totalToPay += 200;
+                                }
                             }
-                        }
 
-                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
-                            if (anm.getWeight() >= 10) {
-                                totalToPay += 25;
-                            } else {
-                                totalToPay += 50;
+                            if (apps.get(i).getAppoType() == Appointment.AppointmentType.Vaccination) {
+                                if (anm.getWeight() >= 10) {
+                                    totalToPay += 50;
+                                } else {
+                                    totalToPay += 100;
+                                }
                             }
-                        }
 
-                        totalToPay *= 1.23;
-                        total += totalToPay;
+                            if (apps.get(i).getAppoType() == Appointment.AppointmentType.Consultation) {
+                                if (anm.getWeight() >= 10) {
+                                    totalToPay += 25;
+                                } else {
+                                    totalToPay += 50;
+                                }
+                            }
 
-                        if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
-                            LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
-                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getDistance() + " KMs", fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                            tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
-                            i += 3;
-                        } else {
-                            tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getDistance() + " KMs", fontTable));
-                            tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
-                            tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                            totalToPay *= 1.23;
+                            total += totalToPay;
+
+                            if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
+                                LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                                tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatterTime) + " - " + sEnd.format(formatterTime), fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getDistance() + " KMs", fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                                tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                                i += 3;
+                            } else {
+                                tableNormal.addCell(new Paragraph(apps.get(i).getTimeSlot().getStartTime().format(formatterTime) + " - " + apps.get(i).getTimeSlot().getEndTime().format(formatterTime), fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getAnimal().getName() + " (" + apps.get(i).getAnimal().getId() + ")", fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getVet().getName(), fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoType().toString(), fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getDistance() + " KMs", fontTable));
+                                tableNormal.addCell(new Paragraph(apps.get(i).getAppoLocal().toString(), fontTable));
+                                tableNormal.addCell(new Paragraph(String.valueOf(totalToPay) + " €", fontTable));
+                            }
                         }
                     }
                 }
+
+                tableNormal.setWidthPercentage(100);
+                tableNormal.setSpacingBefore(5);
+
+                document.add(tableNormal);
+                document.add(new Paragraph("Invoice Total: " + String.valueOf(total) + " €", font));
+                document.add(Chunk.createWhitespace(""));
+                document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. XihCBR - Processado por programa certificado.", fontTable));
+                document.addTitle("CliPLus - " + internalName);
+                document.close();
+
+                Desktop.getDesktop().open(pdfFile);
             }
-
-            tableNormal.setWidthPercentage(100);
-            tableNormal.setSpacingBefore(5);
-
-            document.add(tableNormal);
-            document.add(new Paragraph("Invoice Total: " + String.valueOf(total) + " €", font));
-            document.add(Chunk.createWhitespace(""));
-            document.add(new Paragraph(Calendar.getInstance().get(Calendar.YEAR) + " © CliPlus. XihCBR - Processado por programa certificado.", fontTable));
-
-            document.close();
-
-            File pdfFile = new File(fileName);
-            Desktop.getDesktop().open(pdfFile);
         }catch (FileNotFoundException e){
             JOptionPane.showMessageDialog(null, "Something went wrong!", "PDF Generation", JOptionPane.ERROR_MESSAGE);
         } catch (DocumentException e) {

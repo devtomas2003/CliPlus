@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.util.Objects;
 
 public class Interactive {
+    private static final ZoneId z = ZoneId.of("Europe/Lisbon");
     public static int readInt(String question, String title){
         boolean success = false;
         int valor = 0;
@@ -57,7 +58,6 @@ public class Interactive {
         boolean isSuccess = false;
         LocalDateTime dtCh = null;
 
-        ZoneId z = ZoneId.of("Europe/Lisbon");
         LocalDateTime now = LocalDateTime.now(z);
 
         do{

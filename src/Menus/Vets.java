@@ -159,12 +159,25 @@ public class Vets {
     }
 
     private static Address askAddress(){
-        String street = Interactive.readString("Street", "Create Vet");
-        int door = Interactive.readInt("Door", "Create Vet");
-        int ZipCode = Interactive.readInt("Zip Code", "Create Vet");
-        String Nlocality = Interactive.readString("Locality", "Create Vet");
-        return new Address(street, door, ZipCode, Nlocality);
+        String street = Interactive.readString("Street", "Create Client");
+        int door = Interactive.readInt("Door", "Create Client");
+        int zipCode = 0;
+        do{
+            try{
+                String ZipCode = Interactive.readString("Zip Code", "Create Client").replace("-", "");
+                zipCode = Integer.parseInt(ZipCode);
+                if(ZipCode.length() != 7){
+                    JOptionPane.showMessageDialog(null, "ZIP Code with invalid format", "ZIP Code Validate", JOptionPane.ERROR_MESSAGE);
+                    zipCode = 0;
+                }
+            }catch (NumberFormatException nfe){
+                JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
+            }
+        }while (zipCode == 0);
+        String Nlocality = Interactive.readString("Locality", "Create Client");
+        return new Address(street, door, zipCode, Nlocality);
     }
+
     public static Vet findVetByOMV(int idOV, ArrayList<People> lPeople) {
         for(People person : lPeople) {
             if(person instanceof Vet){

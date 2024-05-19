@@ -15,11 +15,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Appointments {
+    private static final ZoneId z = ZoneId.of("Europe/Lisbon");
     public static void showMenu(ArrayList<People> persons, ArrayList<Appointment> apps){
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Appointment Operations\n\n1 - Create Appointment\n2 - List Types of Interventions\n3 - Report interventions in a day\n4 - Report interventions for a vet\n5 - Report interventions for a vet in a date\n6 - Report past interventions for a animal\n7 - Report today interventions for a animal\n8 - Report future interventions for a animal\n9 - Report Past/Today Costs\n10 - Report Future Costs\n11 - Generate Invoice\n0 - Previus Menu", "Appointments");
+            opcao = Interactive.readInt("Appointment Operations\n\n1 - Create Appointment\n2 - List Types of Interventions\n3 - Report interventions in a day\n4 - Report interventions for a vet\n5 - Report interventions for a vet in a date\n6 - Report past interventions for a animal\n7 - Report today interventions for a animal\n8 - Report future interventions for a animal\n9 - Report Past/Today Costs\n10 - Report Future Costs\n11 - Generate Invoice\n12 - Unschedule Appointment\n0 - Previus Menu", "Appointments");
 
             switch (opcao) {
                 case 1:
@@ -571,7 +572,6 @@ public class Appointments {
                             }
                         }while (!isAValidChip);
 
-                        boolean haveClient = false;
                         Client clt = null;
                         ArrayList<Animal> animals = new ArrayList<>();
                         for (People ppItr : persons) {
@@ -580,7 +580,6 @@ public class Appointments {
                                 for(Animal anm : ((Client) ppItr).getAnimals()){
                                     if(anm.getId() == chipId){
                                         clt = (Client) ppItr;
-                                        haveClient = true;
                                     }
                                 }
                             }
@@ -590,6 +589,87 @@ public class Appointments {
                         PDFGenerator.GenerateInvoice(anm, apps, clt);
                     }else{
                         JOptionPane.showMessageDialog(null, "Invalid Option", "Schuler Finder", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 12:
+                    int findTypeUnc = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    if(findTypeUnc == 1){
+                        int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                        if(ccRead == 0) {
+                            try {
+                                PTEID_EId eid = CitizenCard.initiate();
+                                int nif = Integer.parseInt(eid.getTaxNo());
+                                Client pp = Clients.findClient(nif, persons);
+                                if(pp == null){
+                                    JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                    break;
+                                }
+
+                                ArrayList<Animal> animals = new ArrayList<>();
+
+                                for (People ppItr : persons) {
+                                    if (ppItr instanceof Client) {
+                                        animals.addAll(((Client) ppItr).getAnimals());
+                                    }
+                                }
+
+                                int chipId = selectAnimalFromClient(pp);
+                                Animal anm = Animals.findAnimal(chipId, animals);
+
+                                unscheduleAppointment(apps, anm);
+                            }catch (PTEID_ExNoReader ex){
+                                JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            }catch (PTEID_ExNoCardPresent ex) {
+                                JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } catch (PTEID_Exception e) {
+                                JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } finally {
+                                CitizenCard.release();
+                            }
+                        }else{
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+
+                            int chipId = selectAnimalFromClient(pp);
+                            Animal anm = Animals.findAnimal(chipId, animals);
+
+                            unscheduleAppointment(apps, anm);
+                        }
+                    }else if(findTypeUnc == 2) {
+                        Animal anmLocated = null;
+                        boolean isAValidChip = false;
+
+                        do {
+                            int chipId = Interactive.readInt("Enter the chip ID", "Find Animal");
+
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    ArrayList<Animal> anms = ((Client) pp).getAnimals();
+                                    for (Animal anm : anms) {
+                                        if (anm.getId() == chipId) {
+                                            isAValidChip = true;
+                                            anmLocated = anm;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!isAValidChip) {
+                                JOptionPane.showMessageDialog(null, "This animal does not exists!", "Find Animal", JOptionPane.ERROR_MESSAGE);
+                            }
+                        } while (!isAValidChip);
+
+                        unscheduleAppointment(apps, anmLocated);
                     }
                     break;
                 case 0:
@@ -779,7 +859,6 @@ public class Appointments {
                 }
             }
         }else{
-            ZoneId z = ZoneId.of("Europe/Lisbon");
             LocalDateTime dtCh = LocalDateTime.now(z);
             LocalDateTime now = LocalDateTime.now(z);
 
@@ -924,5 +1003,70 @@ public class Appointments {
             fileData += app.getAppoType() + "," + app.getAppoLocal() + "," + app.getVet().getNif() + "," + app.getAnimal().getId() + "," + app.getTimeSlot().getStartTime() + "," + app.getTimeSlot().getEndTime() + "," + app.getDistance() + "\n";
         }
         Files.saveData("appointments.csv", fileData);
+    }
+
+    private static void unscheduleAppointment(ArrayList<Appointment> apps, Animal anm){
+        LocalDateTime dtCh = LocalDateTime.now(z);
+        ArrayList<Appointment> appsPossible = new ArrayList<Appointment>();
+
+        for(Appointment app : apps){
+            if(app.getAnimal().getId() == anm.getId()){
+                if (app.getTimeSlot().getStartTime().isAfter(dtCh)) {
+                    appsPossible.add(app);
+                }
+            }
+        }
+
+        String txtToShow = "Please choose the appointment slot:\n\n";
+        int codigo = 1;
+        HashMap<Integer, Appointment> codigos = new HashMap<Integer, Appointment>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        for(int i = 0; i < appsPossible.size(); i++){
+            if(appsPossible.get(i).getAppoType() == Appointment.AppointmentType.Surgery){
+                LocalDateTime sEnd = appsPossible.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                txtToShow += codigo + " - " +  appsPossible.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatter) + " until " + sEnd.format(formatter) + " (" + appsPossible.get(i).getAppoType() + ")" + "\n";
+                i += 3;
+                codigos.put(codigo, appsPossible.get(i));
+            }else{
+                txtToShow += codigo + " - " + appsPossible.get(i).getTimeSlot().getStartTime().format(formatter) + " until " + appsPossible.get(i).getTimeSlot().getEndTime().format(formatter) + " (" + appsPossible.get(i).getAppoType() + ")" + "\n";
+                codigos.put(codigo, appsPossible.get(i));
+            }
+            codigo++;
+        }
+        int codigoToDelete = Interactive.readInt(txtToShow, "Appointment Slot");
+        if(codigos.containsKey(codigoToDelete)){
+            ArrayList<Appointment> lApps = new ArrayList<Appointment>();
+            if(codigos.get(codigoToDelete).getAppoType() == Appointment.AppointmentType.Surgery){
+                for(int i = 0; i < 4; i++) {
+                    Slot slotFirst = new Slot(codigos.get(codigoToDelete).getTimeSlot().getStartTime(), codigos.get(codigoToDelete).getTimeSlot().getEndTime());
+                    slotFirst.setStartTime(slotFirst.getStartTime().plusMinutes(30 * i));
+                    slotFirst.setEndTime(slotFirst.getEndTime().plusMinutes(30 * i));
+
+                    Appointment aptFirst = new Appointment(codigos.get(codigoToDelete).getAppoType(), codigos.get(codigoToDelete).getAppoLocal(), codigos.get(codigoToDelete).getAnimal(), slotFirst, codigos.get(codigoToDelete).getVet());
+                    lApps.add(aptFirst);
+                }
+            }else{
+                lApps.add(codigos.get(codigoToDelete));
+            }
+
+            if(JOptionPane.showConfirmDialog(null, "Are you sure? Slot Selected: " + codigos.get(codigoToDelete).getTimeSlot().getStartTime().format(formatter) + " - " + codigos.get(codigoToDelete).getTimeSlot().getEndTime().format(formatter), "Confirm Unschedule", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+                Iterator<Appointment> iterator = apps.iterator();
+                while (iterator.hasNext()) {
+                    Appointment app = iterator.next();
+                    for (Appointment appToDelete : lApps) {
+                        if (app.getTimeSlot().getStartTime().equals(appToDelete.getTimeSlot().getStartTime()) &&
+                                app.getTimeSlot().getEndTime().equals(appToDelete.getTimeSlot().getEndTime())) {
+                            iterator.remove();
+                            break;
+                        }
+                    }
+                }
+                saveAppointmentsInFile(apps);
+                JOptionPane.showMessageDialog(null, "Appointment deleted with success!", "Appointment Unscheduler", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }else{
+            JOptionPane.showMessageDialog(null, "Invalid Code", "Unschedule Appointment", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
