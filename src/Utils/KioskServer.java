@@ -60,6 +60,8 @@ public class KioskServer implements Runnable {
                     ArrayList<Appointment> todayApps = new ArrayList<>();
                     for(int i = 0; i < apps.size(); i++){
                         for(Animal anm : clientAnimals){
+                            System.out.println(anm.getId());
+                            System.out.println(apps.get(i).getAnimal().getId());
                             if(apps.get(i).getAnimal().getId() == anm.getId()){
                                 if(apps.get(i).getTimeSlot().getStartTime().toLocalDate().isAfter(now.toLocalDate()) || apps.get(i).getTimeSlot().getStartTime().toLocalDate().isEqual(now.toLocalDate())){
                                     if(apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery){

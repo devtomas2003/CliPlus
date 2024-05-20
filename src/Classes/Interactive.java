@@ -10,12 +10,17 @@ import java.util.Objects;
 
 public class Interactive {
     private static final ZoneId z = ZoneId.of("Europe/Lisbon");
-    public static int readInt(String question, String title){
+    public static int readInt(String question, String title, int defaultValue){
         boolean success = false;
         int valor = 0;
         do{
             try{
-                String input = JOptionPane.showInputDialog(null, question, title, JOptionPane.INFORMATION_MESSAGE);
+                String input;
+                if(defaultValue == 0){
+                    input = JOptionPane.showInputDialog(null, question, title, JOptionPane.INFORMATION_MESSAGE);
+                }else{
+                    input = (String) JOptionPane.showInputDialog(null, question, title, JOptionPane.INFORMATION_MESSAGE, null, null, defaultValue);
+                }
                 if (input == null) {
                     break;
                 }
@@ -27,10 +32,10 @@ public class Interactive {
         }while (!success);
         return valor;
     }
-    public static String readString(String question, String title){
+    public static String readString(String question, String title, String defaultValue){
         String valor = "";
         do{
-            valor = JOptionPane.showInputDialog(null, question, title, JOptionPane.INFORMATION_MESSAGE);
+            valor = (String) JOptionPane.showInputDialog(null, question, title, JOptionPane.INFORMATION_MESSAGE, null, null, defaultValue);
             if (Objects.equals(valor, "")) {
                 JOptionPane.showMessageDialog(null, "The text cannot be empty!", "Wrong Type", JOptionPane.ERROR_MESSAGE);
             }
@@ -61,9 +66,9 @@ public class Interactive {
         LocalDateTime now = LocalDateTime.now(z);
 
         do{
-            int day = Interactive.readInt("Insert an day", title);
-            int month = Interactive.readInt("Insert an month", title);
-            int year = Interactive.readInt("Insert an year", title);
+            int day = Interactive.readInt("Insert an day", title, 0);
+            int month = Interactive.readInt("Insert an month", title, 0);
+            int year = Interactive.readInt("Insert an year", title, 0);
 
             try{
                 dtCh = LocalDate.of(year, month, day).atStartOfDay();

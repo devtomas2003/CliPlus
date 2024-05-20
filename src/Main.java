@@ -17,29 +17,37 @@ public class Main {
         Thread serverThread = new Thread(new KioskServer(apps, people));
         serverThread.start();
 
-        String username = Interactive.readString("Username", "Authentication");
+        boolean authenticated = false;
 
-        JPanel panel = new JPanel();
-        JLabel label = new JLabel("Password:");
-        JPasswordField pass = new JPasswordField(10);
-        panel.add(label);
-        panel.add(pass);
-        String[] options = new String[]{"OK", "Cancel"};
-        String password = "";
         do{
-            int option = JOptionPane.showOptionDialog(null, panel, "Authentication", JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,null, options, options[1]);
-            if(option == 0)
-            {
-                char[] passwordArr = pass.getPassword();
-                password = new String(passwordArr);
-            }
-        }while (password.equals(""));
+            String username = Interactive.readString("Username", "Authentication", "");
 
-        if(Objects.equals(username, "admin") && Objects.equals(password, "admin")){
+            JPanel panel = new JPanel();
+            JLabel label = new JLabel("Password:");
+            JPasswordField pass = new JPasswordField(10);
+            panel.add(label);
+            panel.add(pass);
+            String[] options = new String[]{"OK", "Cancel"};
+            String password = "";
+            do{
+                int option = JOptionPane.showOptionDialog(null, panel, "Authentication", JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,null, options, options[1]);
+                if(option == 0)
+                {
+                    char[] passwordArr = pass.getPassword();
+                    password = new String(passwordArr);
+                }
+            }while (password.equals(""));
+            if(Objects.equals(username, "admin") && Objects.equals(password, "admin")){
+                authenticated = true;
+            }else{
+                JOptionPane.showMessageDialog(null, "Wrong username/password", "Authentication", JOptionPane.ERROR_MESSAGE);
+            }
+        }while (!authenticated);
+
             int optionSelected;
 
             do{
-                optionSelected = Interactive.readInt( "Welcome to CliPlus\n\n1 - Clients\n2 - Vets\n3 - Animals\n4 - Appointments\n5 - Database\n0 - Exit", "Menu");
+                optionSelected = Interactive.readInt( "Welcome to CliPlus\n\n1 - Clients\n2 - Vets\n3 - Animals\n4 - Appointments\n5 - Database\n0 - Exit", "Menu" ,0);
 
                 switch (optionSelected){
                     case 1:
@@ -63,13 +71,10 @@ public class Main {
                         JOptionPane.showMessageDialog(null, "The option selected is invalid!", "Invalid Option Selected", JOptionPane.ERROR_MESSAGE);
                 }
             }while (optionSelected != 0);
-        }else{
-            JOptionPane.showMessageDialog(null, "Wrong username/password", "Authentication", JOptionPane.ERROR_MESSAGE);
-        }
     }
 
     private static void loadData(ArrayList<People> people, ArrayList<Appointment> apps){
-        String dadosClients = Files.readData("clients.csv");
+        String dadosClients = Files.readData("clients.txt");
         String linesClients[] = dadosClients.split("\n");
         for(int i = 0; i < linesClients.length; i++){
             String lineClt[] = linesClients[i].split(",");
@@ -78,7 +83,7 @@ public class Main {
             clt.setAddress(addr);
             people.add(clt);
         }
-        String dados = Files.readData("vets.csv");
+        String dados = Files.readData("vets.txt");
         String lines[] = dados.split("\n");
         for(int i = 0; i < lines.length; i++){
             String line[] = lines[i].split(",");
@@ -87,7 +92,7 @@ public class Main {
             vt.setAddress(addr);
             people.add(vt);
         }
-        String dadosAnimals = Files.readData("animals.csv");
+        String dadosAnimals = Files.readData("animals.txt");
         String linesAnimals[] = dadosAnimals.split("\n");
         for(int i = 0; i < linesAnimals.length; i++){
             String lineAnimal[] = linesAnimals[i].split(",");
@@ -95,14 +100,14 @@ public class Main {
             Client clt = Clients.findClient(Integer.parseInt(lineAnimal[5]), people);
             clt.addAnimal(anm);
             int codVet = Integer.parseInt(lineAnimal[6]);
+
             Vet vetData = Vets.findVetByOMV(codVet, people);
             vetData.addAnimal(anm.getId());
         }
-        String dadosAppointments = Files.readData("appointments.csv");
+        String dadosAppointments = Files.readData("appointments.txt");
         String linesApps[] = dadosAppointments.split("\n");
         for(int i = 0; i < linesApps.length; i++){
             String linesApp[] = linesApps[i].split(",");
-
             ArrayList<Animal> anms = new ArrayList<Animal>();
 
             for(People pp : people){

@@ -16,7 +16,7 @@ public class Vets {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Vets Operations\n\n1 - Create Vet\n2 - List All Vets\n3 - List Animals associated with vets\n4 - List associated Clients\n0 - Previus Menu", "Vets");
+            opcao = Interactive.readInt("Vets Operations\n\n1 - Create Vet\n2 - List All Vets\n3 - List Animals associated with vets\n4 - List associated Clients\n0 - Previus Menu", "Vets", 0);
 
             switch (opcao){
                 case 1:
@@ -26,8 +26,8 @@ public class Vets {
                             PTEID_EId eid = CitizenCard.initiate();
                             String name = eid.getGivenName() + " " + eid.getSurname();
                             int nif = Integer.parseInt(eid.getTaxNo());
-                            int idOV = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Create Vet");
-                            String contact = Interactive.readString("Contact", "Create Vet");
+                            int idOV = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Create Vet", 0);
+                            String contact = Interactive.readString("Contact", "Create Vet", "");
 
                             Vet verDataOMV = findVetByOMV(idOV, peoples);
                             if(verDataOMV != null){
@@ -55,10 +55,10 @@ public class Vets {
                             CitizenCard.release();
                         }
                     }else{
-                        String name = Interactive.readString("Name", "Create Vet");
-                        int nif = Interactive.readInt("NIF", "Create Vet");
-                        int idOV = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Create Vet");
-                        String contact = Interactive.readString("Contact", "Create Vet");
+                        String name = Interactive.readString("Name", "Create Vet", "");
+                        int nif = Interactive.readInt("NIF", "Create Vet", 0);
+                        int idOV = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Create Vet", 0);
+                        String contact = Interactive.readString("Contact", "Create Vet", "");
                         Vet pp = new Vet(nif, name, idOV, contact);
                         Address address = askAddress();
                         confirmVet(address, pp, peoples);
@@ -159,12 +159,12 @@ public class Vets {
     }
 
     private static Address askAddress(){
-        String street = Interactive.readString("Street", "Create Client");
-        int door = Interactive.readInt("Door", "Create Client");
+        String street = Interactive.readString("Street", "Create Client", "");
+        int door = Interactive.readInt("Door", "Create Client", 0);
         int zipCode = 0;
         do{
             try{
-                String ZipCode = Interactive.readString("Zip Code", "Create Client").replace("-", "");
+                String ZipCode = Interactive.readString("Zip Code", "Create Client", "").replace("-", "");
                 zipCode = Integer.parseInt(ZipCode);
                 if(ZipCode.length() != 7){
                     JOptionPane.showMessageDialog(null, "ZIP Code with invalid format", "ZIP Code Validate", JOptionPane.ERROR_MESSAGE);
@@ -174,7 +174,7 @@ public class Vets {
                 JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
             }
         }while (zipCode == 0);
-        String Nlocality = Interactive.readString("Locality", "Create Client");
+        String Nlocality = Interactive.readString("Locality", "Create Client", "");
         return new Address(street, door, zipCode, Nlocality);
     }
 
@@ -207,6 +207,6 @@ public class Vets {
                 fileData += vetInfo.getNif() + "," + vetInfo.getName() + "," + vetInfo.getContact() + "," + vetInfo.getAddress().getNstreet() + "," + vetInfo.getAddress().getZipCode() + "," + vetInfo.getAddress().getndoor() + "," + vetInfo.getAddress().getNlocality() + "," + vetInfo.getIdOV() + "\n";
             }
         }
-        Files.saveData("vets.csv", fileData);
+        Files.saveData("vets.txt", fileData);
     }
 }

@@ -1,0 +1,7 @@
+Flopi,888,M,Serra da Estrela,48.6,246144564,124,true
+Bobi,889,M,Vira Lata,37.2,111111111,123,true
+Psiu Psiu,890,F,Gata,24.8,222222222,125,true
+Piruças,891,M,Almeão,21.9,246144564,124,true
+Rai,892,F,Pantera Negra,85.0,111111111,123,true
+Toto,893,M,Loxodonta,74.9,222222222,125,true
+Azulão,894,F,Arara,68.2,246144564,124,true

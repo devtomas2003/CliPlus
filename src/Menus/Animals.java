@@ -15,7 +15,7 @@ public class Animals {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n0 - Previus Menu", "Animals");
+            opcao = Interactive.readInt("Animals Operations\n\n1 - Create Animal\n2 - List All Animals\n0 - Previus Menu", "Animals", 0);
 
             switch (opcao){
                 case 1:
@@ -40,7 +40,7 @@ public class Animals {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                         Client pp = findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -74,11 +74,11 @@ public class Animals {
     }
 
     private static void saveAnimal(Client pp, ArrayList<People> peoples){
-        String animalName = Interactive.readString("Name of animal", "Create Animal");
+        String animalName = Interactive.readString("Name of animal", "Create Animal", "");
 
         int chipId = 0;
         do{
-            chipId = Interactive.readInt("Animal Chip ID", "Create Animal");
+            chipId = Interactive.readInt("Animal Chip ID", "Create Animal", 0);
 
             ArrayList<Animal> anms = new ArrayList<Animal>();
 
@@ -96,15 +96,15 @@ public class Animals {
             }
         }while (chipId == 0);
 
-        String specie = Interactive.readString("Specie of animal", "Create Animal");
-        String genre = Interactive.readString("Genre of animal", "Create Animal");
+        String specie = Interactive.readString("Specie of animal", "Create Animal", "");
+        String genre = Interactive.readString("Genre of animal", "Create Animal", "");
         double weight = Interactive.readDouble("Weight of animal", "Create Animal");
 
         boolean shouldRequestVetId = true;
         Vet vetFound = null;
 
         while (shouldRequestVetId){
-            int vetId = Interactive.readInt("Vet ID", "Create Animal");
+            int vetId = Interactive.readInt("Vet ID", "Create Animal", 0);
 
             for(People ppData : peoples) {
                 if(ppData instanceof Vet){

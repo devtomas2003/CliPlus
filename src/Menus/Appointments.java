@@ -9,6 +9,7 @@ import pt.gov.cartaodecidadao.PTEID_ExNoReader;
 import pt.gov.cartaodecidadao.PTEID_Exception;
 
 import javax.swing.*;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -20,11 +21,11 @@ public class Appointments {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Appointment Operations\n\n1 - Create Appointment\n2 - List Types of Interventions\n3 - Report interventions in a day\n4 - Report interventions for a vet\n5 - Report interventions for a vet in a date\n6 - Report past interventions for a animal\n7 - Report today interventions for a animal\n8 - Report future interventions for a animal\n9 - Report Past/Today Costs\n10 - Report Future Costs\n11 - Generate Invoice\n12 - Unschedule Appointment\n0 - Previus Menu", "Appointments");
+            opcao = Interactive.readInt("Appointment Operations\n\n1 - Create Appointment\n2 - List Types of Interventions\n3 - Report interventions in a day\n4 - Report interventions for a vet\n5 - Report interventions for a vet in a date\n6 - Report past interventions for a animal\n7 - Report today interventions for a animal\n8 - Report future interventions for a animal\n9 - Report Past/Today Costs\n10 - Report Future Costs\n11 - Generate Invoice\n12 - Unschedule Appointment\n13 - Appointment Detail Record\n0 - Previus Menu", "Appointments", 0);
 
             switch (opcao) {
                 case 1:
-                    int findType = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    int findType = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
                     if(findType == 1){
                         int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(ccRead == 0) {
@@ -48,7 +49,7 @@ public class Appointments {
                                 CitizenCard.release();
                             }
                         }else{
-                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                             Client pp = Clients.findClient(nif, persons);
                             if(pp == null){
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -62,7 +63,7 @@ public class Appointments {
                         boolean isAValidChip = false;
 
                         do{
-                            chipId = Interactive.readInt("Enter the chip ID", "Find Animal");
+                            chipId = Interactive.readInt("Enter the chip ID", "Find Animal", 0);
 
                             for(People pp : persons){
                                 if(pp instanceof Client){
@@ -97,7 +98,7 @@ public class Appointments {
                     PDFGenerator.reportByVetAndDate(apps, persons);
                     break;
                 case 6:
-                    int findTypeReports = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    int findTypeReports = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
                     if(findTypeReports == 1){
                         int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(readCC == 0){
@@ -128,7 +129,7 @@ public class Appointments {
                                 CitizenCard.release();
                             }
                         }else{
-                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                             Client pp = Clients.findClient(nif, persons);
                             if(pp == null){
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -149,7 +150,7 @@ public class Appointments {
                         boolean isAValidChip = false;
 
                         do{
-                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal");
+                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal", 0);
 
                             for(People pp : persons){
                                 if(pp instanceof Client){
@@ -199,7 +200,7 @@ public class Appointments {
                     }
                     break;
                 case 7:
-                    int findTypeReportsToday = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    int findTypeReportsToday = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
                     if(findTypeReportsToday == 1){
                         int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(readCC == 0){
@@ -230,7 +231,7 @@ public class Appointments {
                                 CitizenCard.release();
                             }
                         }else{
-                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                             Client pp = Clients.findClient(nif, persons);
                             if(pp == null){
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -251,7 +252,7 @@ public class Appointments {
                         boolean isAValidChip = false;
 
                         do{
-                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal");
+                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal",0);
 
                             for(People pp : persons){
                                 if(pp instanceof Client){
@@ -301,7 +302,7 @@ public class Appointments {
                     }
                     break;
                 case 8:
-                    int findTypeReportsFuture = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    int findTypeReportsFuture = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
                     if(findTypeReportsFuture == 1){
                         int readCC = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(readCC == 0){
@@ -332,7 +333,7 @@ public class Appointments {
                                 CitizenCard.release();
                             }
                         }else{
-                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                             Client pp = Clients.findClient(nif, persons);
                             if(pp == null){
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -353,7 +354,7 @@ public class Appointments {
                         boolean isAValidChip = false;
 
                         do{
-                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal");
+                            chipId = Interactive.readInt("Enter the chip ID (0 - Exit)", "Find Animal", 0);
 
                             for(People pp : persons){
                                 if(pp instanceof Client){
@@ -431,7 +432,7 @@ public class Appointments {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                         Client pp = Clients.findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -478,7 +479,7 @@ public class Appointments {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                         Client pp = Clients.findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -496,7 +497,7 @@ public class Appointments {
                     }
                     break;
                 case 11:
-                    int findTypeInvoice = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    int findTypeInvoice = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
                     if(findTypeInvoice == 1){
                         int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(ccRead == 0) {
@@ -531,7 +532,7 @@ public class Appointments {
                                 CitizenCard.release();
                             }
                         }else{
-                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                             Client pp = Clients.findClient(nif, persons);
                             if(pp == null){
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -555,7 +556,7 @@ public class Appointments {
                         boolean isAValidChip = false;
 
                         do{
-                            chipId = Interactive.readInt("Enter the chip ID", "Find Animal");
+                            chipId = Interactive.readInt("Enter the chip ID", "Find Animal", 0);
 
                             for(People pp : persons){
                                 if(pp instanceof Client){
@@ -592,7 +593,7 @@ public class Appointments {
                     }
                     break;
                 case 12:
-                    int findTypeUnc = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal");
+                    int findTypeUnc = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
                     if(findTypeUnc == 1){
                         int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
                         if(ccRead == 0) {
@@ -627,7 +628,7 @@ public class Appointments {
                                 CitizenCard.release();
                             }
                         }else{
-                            int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                             Client pp = Clients.findClient(nif, persons);
                             if(pp == null){
                                 JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -651,7 +652,7 @@ public class Appointments {
                         boolean isAValidChip = false;
 
                         do {
-                            int chipId = Interactive.readInt("Enter the chip ID", "Find Animal");
+                            int chipId = Interactive.readInt("Enter the chip ID", "Find Animal", 0);
 
                             for (People pp : persons) {
                                 if (pp instanceof Client) {
@@ -670,6 +671,89 @@ public class Appointments {
                         } while (!isAValidChip);
 
                         unscheduleAppointment(apps, anmLocated);
+                    }
+                    break;
+                case 13:
+                    int findTypeRep = Interactive.readInt("How to find the animal?\n\n1 - By Client\n2 - By Chip ID", "Find Animal", 0);
+                    if(findTypeRep == 1){
+                        int ccRead = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                        if(ccRead == 0) {
+                            try {
+                                PTEID_EId eid = CitizenCard.initiate();
+                                int nif = Integer.parseInt(eid.getTaxNo());
+                                Client pp = Clients.findClient(nif, persons);
+                                if(pp == null){
+                                    JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                    break;
+                                }
+
+                                ArrayList<Animal> animals = new ArrayList<>();
+
+                                for (People ppItr : persons) {
+                                    if (ppItr instanceof Client) {
+                                        animals.addAll(((Client) ppItr).getAnimals());
+                                    }
+                                }
+
+                                int chipId = selectAnimalFromClient(pp);
+                                Animal anm = Animals.findAnimal(chipId, animals);
+
+                                scheduleDetailRecord(apps, anm, pp);
+                            }catch (PTEID_ExNoReader ex){
+                                JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            }catch (PTEID_ExNoCardPresent ex) {
+                                JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } catch (PTEID_Exception e) {
+                                JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            } finally {
+                                CitizenCard.release();
+                            }
+                        }else{
+                            int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
+                            Client pp = Clients.findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+
+                            ArrayList<Animal> animals = new ArrayList<>();
+                            for (People ppItr : persons) {
+                                if (ppItr instanceof Client) {
+                                    animals.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+
+                            int chipId = selectAnimalFromClient(pp);
+                            Animal anm = Animals.findAnimal(chipId, animals);
+
+                            scheduleDetailRecord(apps, anm, pp);
+                        }
+                    }else if(findTypeRep == 2) {
+                        Animal anmLocated = null;
+                        boolean isAValidChip = false;
+                        Client owner = null;
+
+                        do {
+                            int chipId = Interactive.readInt("Enter the chip ID", "Find Animal", 0);
+
+                            for (People pp : persons) {
+                                if (pp instanceof Client) {
+                                    ArrayList<Animal> anms = ((Client) pp).getAnimals();
+                                    for (Animal anm : anms) {
+                                        if (anm.getId() == chipId) {
+                                            isAValidChip = true;
+                                            anmLocated = anm;
+                                            owner = (Client) pp;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!isAValidChip) {
+                                JOptionPane.showMessageDialog(null, "This animal does not exists!", "Find Animal", JOptionPane.ERROR_MESSAGE);
+                            }
+                        } while (!isAValidChip);
+
+                        scheduleDetailRecord(apps, anmLocated, owner);
                     }
                     break;
                 case 0:
@@ -693,7 +777,7 @@ public class Appointments {
         }
         int selectedCode = 0;
         do {
-            int selectedCodeOpt = Interactive.readInt(txtToShow, "Select Animal");
+            int selectedCodeOpt = Interactive.readInt(txtToShow, "Select Animal", 0);
             if (!codigos.containsKey(selectedCodeOpt)){
                 JOptionPane.showMessageDialog(null, "Invalid Code", "Select Animal", JOptionPane.ERROR_MESSAGE);
             }else{
@@ -718,7 +802,7 @@ public class Appointments {
 
         int opcao = -1;
         do{
-            opcao = Interactive.readInt("What appointment do you want to schedule?\n\n1 - Normal\n2 - Vaccination\n3 - Surgery", "Appointments");
+            opcao = Interactive.readInt("What appointment do you want to schedule?\n\n1 - Normal\n2 - Vaccination\n3 - Surgery", "Appointments", 0);
             if(opcao != 1 && opcao != 2 && opcao != 3){
                 JOptionPane.showMessageDialog(null, "Invalid option!", "Scheduler", JOptionPane.ERROR_MESSAGE);
             }
@@ -726,15 +810,15 @@ public class Appointments {
 
         int opcaoLocation = -1;
         do{
-            opcaoLocation = Interactive.readInt("Where this appointment should happen?\n\n1 - On Site\n2 - Remote", "Appointments");
-            if(opcaoLocation != 1 && opcao != 2){
+            opcaoLocation = Interactive.readInt("Where this appointment should happen?\n\n1 - On Site\n2 - Remote", "Appointments", 0);
+            if(opcaoLocation != 1 && opcaoLocation != 2){
                 JOptionPane.showMessageDialog(null, "Invalid option!", "Scheduler", JOptionPane.ERROR_MESSAGE);
             }
         }while (opcaoLocation == -1);
 
         Appointment.AppointmentLocation aptLocal;
 
-        if(opcao == 1){
+        if(opcaoLocation == 1){
             aptLocal = Appointment.AppointmentLocation.OnSite;
         }else{
             aptLocal = Appointment.AppointmentLocation.Remote;
@@ -749,7 +833,7 @@ public class Appointments {
 
         Vet vetSelected = null;
         do{
-            int vetId = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Find Vet");
+            int vetId = Interactive.readInt("ID of Ordem dos Medicos Veterinarios", "Find Vet", 0);
             Vet vetFounded = Vets.findVetByOMV(vetId, persons);
             if(vetFounded == null){
                 JOptionPane.showMessageDialog(null, "This OMV ID does not exists!", "Find Vet", JOptionPane.ERROR_MESSAGE);
@@ -760,7 +844,7 @@ public class Appointments {
 
         int opcaoTimeSlot = -1;
         do{
-            opcaoTimeSlot = Interactive.readInt("When do you want to schedule?\n\n1 - Check a day\n2 - Next Available\n0 - Cancel", "Appointments");
+            opcaoTimeSlot = Interactive.readInt("When do you want to schedule?\n\n1 - Check a day\n2 - Next Available\n0 - Cancel", "Appointments", 0);
             if(opcaoTimeSlot != 1 && opcaoTimeSlot != 2){
                 JOptionPane.showMessageDialog(null, "Invalid option!", "Scheduler", JOptionPane.ERROR_MESSAGE);
                 break;
@@ -835,7 +919,7 @@ public class Appointments {
                     }
                 }
 
-                int codigoToSelect = Interactive.readInt(txtToShow, "Select Schedule");
+                int codigoToSelect = Interactive.readInt(txtToShow, "Select Schedule", 0);
                 if(codigos.containsKey(codigoToSelect)){
                     Appointment appt = new Appointment(aptType, aptLocal, anm, codigos.get(codigoToSelect), vetSelected);
                     if(aptType == Appointment.AppointmentType.Surgery) {
@@ -849,11 +933,13 @@ public class Appointments {
                             startSch = endSch;
                         }
                     }
+                    appt.setDistance(getLocation);
                     apps.add(appt);
 
                     saveAppointmentsInFile(apps);
 
-                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!\n\nTotal to pay: €" + totalToPay, "Scheduler", JOptionPane.INFORMATION_MESSAGE);
+                    DecimalFormat formato = new DecimalFormat("#.##");
+                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!\n\nTotal to pay: €" + formato.format(totalToPay), "Scheduler", JOptionPane.INFORMATION_MESSAGE);
                 }else{
                     JOptionPane.showMessageDialog(null, "Invalid Code", "Scheduler", JOptionPane.ERROR_MESSAGE);
                 }
@@ -899,7 +985,7 @@ public class Appointments {
                     }
                 }
 
-                int codigoToSelect = Interactive.readInt(txtToShow, "Select Schedule");
+                int codigoToSelect = Interactive.readInt(txtToShow, "Select Schedule", 0);
                 if(codigos.containsKey(codigoToSelect)){
                     Appointment appt = new Appointment(aptType, aptLocal, anm, codigos.get(codigoToSelect), vetSelected);
                     if(aptType == Appointment.AppointmentType.Surgery) {
@@ -913,11 +999,12 @@ public class Appointments {
                             startSch = endSch;
                         }
                     }
+                    appt.setDistance(getLocation);
                     apps.add(appt);
 
                     saveAppointmentsInFile(apps);
-
-                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!\n\nTotal to pay: €" + totalToPay, "Scheduler", JOptionPane.INFORMATION_MESSAGE);
+                    DecimalFormat formato = new DecimalFormat("#.##");
+                    JOptionPane.showMessageDialog(null,  aptType + " scheduled with success!\n\nTotal to pay: €" + formato.format(totalToPay), "Scheduler", JOptionPane.INFORMATION_MESSAGE);
                 }else{
                     JOptionPane.showMessageDialog(null, "Invalid Code", "Scheduler", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1002,7 +1089,7 @@ public class Appointments {
         for(Appointment app : apps){
             fileData += app.getAppoType() + "," + app.getAppoLocal() + "," + app.getVet().getNif() + "," + app.getAnimal().getId() + "," + app.getTimeSlot().getStartTime() + "," + app.getTimeSlot().getEndTime() + "," + app.getDistance() + "\n";
         }
-        Files.saveData("appointments.csv", fileData);
+        Files.saveData("appointments.txt", fileData);
     }
 
     private static void unscheduleAppointment(ArrayList<Appointment> apps, Animal anm){
@@ -1034,7 +1121,7 @@ public class Appointments {
             }
             codigo++;
         }
-        int codigoToDelete = Interactive.readInt(txtToShow, "Appointment Slot");
+        int codigoToDelete = Interactive.readInt(txtToShow, "Appointment Slot", 0);
         if(codigos.containsKey(codigoToDelete)){
             ArrayList<Appointment> lApps = new ArrayList<Appointment>();
             if(codigos.get(codigoToDelete).getAppoType() == Appointment.AppointmentType.Surgery){
@@ -1064,6 +1151,57 @@ public class Appointments {
                 }
                 saveAppointmentsInFile(apps);
                 JOptionPane.showMessageDialog(null, "Appointment deleted with success!", "Appointment Unscheduler", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }else{
+            JOptionPane.showMessageDialog(null, "Invalid Code", "Unschedule Appointment", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static void scheduleDetailRecord(ArrayList<Appointment> apps, Animal anm, Client clt){
+        LocalDateTime dtCh = LocalDateTime.now(z);
+        ArrayList<Appointment> appsPossible = new ArrayList<Appointment>();
+
+        for(Appointment app : apps){
+            if(app.getAnimal().getId() == anm.getId()){
+                appsPossible.add(app);
+            }
+        }
+
+        String txtToShow = "Please choose the appointment slot:\n\n";
+        int codigo = 1;
+        HashMap<Integer, Appointment> codigos = new HashMap<Integer, Appointment>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        for(int i = 0; i < appsPossible.size(); i++){
+            if(appsPossible.get(i).getAppoType() == Appointment.AppointmentType.Surgery){
+                LocalDateTime sEnd = appsPossible.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);
+                txtToShow += codigo + " - " +  appsPossible.get(i).getTimeSlot().getStartTime().minusMinutes(30).format(formatter) + " until " + sEnd.format(formatter) + " (" + appsPossible.get(i).getAppoType() + ")" + "\n";
+                i += 3;
+                codigos.put(codigo, appsPossible.get(i));
+            }else{
+                txtToShow += codigo + " - " + appsPossible.get(i).getTimeSlot().getStartTime().format(formatter) + " until " + appsPossible.get(i).getTimeSlot().getEndTime().format(formatter) + " (" + appsPossible.get(i).getAppoType() + ")" + "\n";
+                codigos.put(codigo, appsPossible.get(i));
+            }
+            codigo++;
+        }
+        int codigoToDelete = Interactive.readInt(txtToShow, "Appointment Slot", 0);
+        if(codigos.containsKey(codigoToDelete)){
+            ArrayList<Appointment> lApps = new ArrayList<Appointment>();
+            if(codigos.get(codigoToDelete).getAppoType() == Appointment.AppointmentType.Surgery){
+                for(int i = 0; i < 4; i++) {
+                    Slot slotFirst = new Slot(codigos.get(codigoToDelete).getTimeSlot().getStartTime(), codigos.get(codigoToDelete).getTimeSlot().getEndTime());
+                    slotFirst.setStartTime(slotFirst.getStartTime().plusMinutes(30 * i));
+                    slotFirst.setEndTime(slotFirst.getEndTime().plusMinutes(30 * i));
+
+                    Appointment aptFirst = new Appointment(codigos.get(codigoToDelete).getAppoType(), codigos.get(codigoToDelete).getAppoLocal(), codigos.get(codigoToDelete).getAnimal(), slotFirst, codigos.get(codigoToDelete).getVet());
+                    lApps.add(aptFirst);
+                }
+            }else{
+                lApps.add(codigos.get(codigoToDelete));
+            }
+
+            if(JOptionPane.showConfirmDialog(null, "Are you sure? Slot Selected: " + codigos.get(codigoToDelete).getTimeSlot().getStartTime().format(formatter) + " - " + codigos.get(codigoToDelete).getTimeSlot().getEndTime().format(formatter), "Confirm Report Generation", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+                PDFGenerator.AppointmentReportRecord(codigos.get(codigoToDelete), clt);
             }
         }else{
             JOptionPane.showMessageDialog(null, "Invalid Code", "Unschedule Appointment", JOptionPane.ERROR_MESSAGE);

@@ -12,7 +12,7 @@ public class Database {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Database Operations\n\n1 - Export .dat\n2 - Import .dat\n3 - Overwrite text files from memory\n0 - Previus Menu", "Animals");
+            opcao = Interactive.readInt("Database Operations\n\n1 - Export .dat\n2 - Import .dat\n3 - Overwrite text files from memory\n0 - Previus Menu", "Animals", 0);
 
             switch (opcao) {
                 case 1:

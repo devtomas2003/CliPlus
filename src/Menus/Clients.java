@@ -2,6 +2,7 @@ package Menus;
 
 import Classes.*;
 import Utils.CitizenCard;
+import Utils.PDFGenerator;
 import pt.gov.cartaodecidadao.*;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ public class Clients {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Clients Operations\n\n1 - Create Client\n2 - List Animals of a Client\n3 - Delete Animal\n0 - Previus Menu", "Clients");
+            opcao = Interactive.readInt("Clients Operations\n\n1 - Create Client\n2 - List Animals of a Client\n3 - Delete Animal\n4 - Client Record Report\n5 - Edit Client\n0 - Previus Menu", "Clients", 0);
 
             switch (opcao){
                 case 1:
@@ -32,7 +33,7 @@ public class Clients {
                                     }
                                 }
                             }
-                            String contact = Interactive.readString("Contact", "Create Client");
+                            String contact = Interactive.readString("Contact", "Create Client", "");
                             Address address = askAddress();
                             Client pp = new Client(nif, name, contact);
                             confirmPerson(address, pp, persons);
@@ -46,16 +47,16 @@ public class Clients {
                             CitizenCard.release();
                         }
                     }else{
-                        String name = Interactive.readString("Name", "Create Client");
+                        String name = Interactive.readString("Name", "Create Client", "");
                         int nif = 0;
                         do{
-                            nif = Interactive.readInt("NIF", "Create Client");
+                            nif = Interactive.readInt("NIF", "Create Client", 0);
                             if(String.valueOf(nif).length() != 9){
                                 nif = 0;
                                 JOptionPane.showMessageDialog(null, "Invalid VAT Number!", "VAT Validation", JOptionPane.ERROR_MESSAGE);
                             }
                         }while (nif == 0);
-                        String contact = Interactive.readString("Contact", "Create Client");
+                        String contact = Interactive.readString("Contact", "Create Client", "");
                         Client pp = new Client(nif, name, contact);
                         Address address = askAddress();
                         confirmPerson(address, pp, persons);
@@ -89,7 +90,7 @@ public class Clients {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                         Client pp = findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
@@ -126,13 +127,90 @@ public class Clients {
                             CitizenCard.release();
                         }
                     }else{
-                        int nif = Interactive.readInt("Enter the client NIF", "Find Client");
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
                         Client pp = findClient(nif, persons);
                         if(pp == null){
                             JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
                         deleteAnimal(nif, persons);
+                    }
+                    break;
+                case 4:
+                    int CCReadCR = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                    if(CCReadCR == 0){
+                        try{
+                            PTEID_EId eid = CitizenCard.initiate();
+                            int nif = Integer.parseInt(eid.getTaxNo());
+                            Client pp = findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                            ArrayList<Animal> anms = new ArrayList<Animal>();
+
+                            for(People ppItr : persons){
+                                if(ppItr instanceof Client){
+                                    anms.addAll(((Client) ppItr).getAnimals());
+                                }
+                            }
+
+                            PDFGenerator.ClientReportRecord(pp, anms);
+                        }catch (PTEID_ExNoReader ex){
+                            JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        }catch (PTEID_ExNoCardPresent ex) {
+                            JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } catch (PTEID_Exception e) {
+                            JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } finally {
+                            CitizenCard.release();
+                        }
+                    }else{
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
+                        Client pp = findClient(nif, persons);
+                        if(pp == null){
+                            JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            break;
+                        }
+                        ArrayList<Animal> anms = new ArrayList<Animal>();
+
+                        for(People ppItr : persons){
+                            if(ppItr instanceof Client){
+                                anms.addAll(((Client) ppItr).getAnimals());
+                            }
+                        }
+
+                        PDFGenerator.ClientReportRecord(pp, anms);
+                    }
+                case 5:
+                    int ccReadEdit = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
+                    if(ccReadEdit == 0){
+                        try{
+                            PTEID_EId eid = CitizenCard.initiate();
+                            int nif = Integer.parseInt(eid.getTaxNo());
+                            Client pp = findClient(nif, persons);
+                            if(pp == null){
+                                JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                            EditClient(pp, persons);
+                        }catch (PTEID_ExNoReader ex){
+                            JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        }catch (PTEID_ExNoCardPresent ex) {
+                            JOptionPane.showMessageDialog(null, "No Card Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } catch (PTEID_Exception e) {
+                            JOptionPane.showMessageDialog(null, "GOV PT SDK Problem!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                        } finally {
+                            CitizenCard.release();
+                        }
+                    }else{
+                        int nif = Interactive.readInt("Enter the client NIF", "Find Client", 0);
+                        Client pp = findClient(nif, persons);
+                        if(pp == null){
+                            JOptionPane.showMessageDialog(null, "This client does not exists!", "Find Client", JOptionPane.ERROR_MESSAGE);
+                            break;
+                        }
+                        EditClient(pp, persons);
                     }
                     break;
                 case 0:
@@ -143,12 +221,12 @@ public class Clients {
         }while (opcao != 0);
     }
     private static Address askAddress(){
-        String street = Interactive.readString("Street", "Create Client");
-        int door = Interactive.readInt("Door", "Create Client");
+        String street = Interactive.readString("Street", "Create Client", "");
+        int door = Interactive.readInt("Door", "Create Client", 0);
         int zipCode = 0;
         do{
            try{
-               String ZipCode = Interactive.readString("Zip Code", "Create Client").replace("-", "");
+               String ZipCode = Interactive.readString("Zip Code", "Create Client", "").replace("-", "");
                zipCode = Integer.parseInt(ZipCode);
                if(ZipCode.length() != 7){
                    JOptionPane.showMessageDialog(null, "ZIP Code with invalid format", "ZIP Code Validate", JOptionPane.ERROR_MESSAGE);
@@ -158,7 +236,7 @@ public class Clients {
                JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
            }
         }while (zipCode == 0);
-        String Nlocality = Interactive.readString("Locality", "Create Client");
+        String Nlocality = Interactive.readString("Locality", "Create Client", "");
         return new Address(street, door, zipCode, Nlocality);
     }
     private static void confirmPerson(Address address, Client clt, ArrayList<People> allPeople){
@@ -203,7 +281,7 @@ public class Clients {
                             codigo++;
                         }
                     }
-                    int codigoToDelete = Interactive.readInt(txtToShow, "Delete Animal");
+                    int codigoToDelete = Interactive.readInt(txtToShow, "Delete Animal", 0);
                     if(codigos.containsKey(codigoToDelete)){
                         for(Animal anm : clt.getAnimals()){
                             if(anm.getId() == codigos.get(codigoToDelete)){
@@ -228,6 +306,35 @@ public class Clients {
                 fileData += pp.getNif() + "," + pp.getName() + "," + pp.getContact() + "," + pp.getAddress().getNstreet() + "," + pp.getAddress().getZipCode() + "," + pp.getAddress().getndoor() + "," + pp.getAddress().getNlocality() + "\n";
             }
         }
-        Files.saveData("clients.csv", fileData);
+        Files.saveData("clients.txt", fileData);
+    }
+
+    private static void EditClient(Client clt, ArrayList<People> pps){
+        String name = Interactive.readString("Name", "Edit Client", clt.getName());
+        String contact = Interactive.readString("Contact", "Edit Client", clt.getContact());
+        Client pp = new Client(clt.getNif(), name, contact);
+
+        String street = Interactive.readString("Street", "Edit Client", clt.getAddress().getNstreet());
+        int door = Interactive.readInt("Door", "Edit Client", clt.getAddress().getndoor());
+        int zipCode = 0;
+        do{
+            try{
+                String ZipCode = Interactive.readString("Zip Code", "Edit Client", String.valueOf(clt.getAddress().getZipCode())).replace("-", "");
+                zipCode = Integer.parseInt(ZipCode);
+                if(ZipCode.length() != 7){
+                    JOptionPane.showMessageDialog(null, "ZIP Code with invalid format", "ZIP Code Validate", JOptionPane.ERROR_MESSAGE);
+                    zipCode = 0;
+                }
+            }catch (NumberFormatException nfe){
+                JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
+            }
+        }while (zipCode == 0);
+        String Nlocality = Interactive.readString("Locality", "Create Client", clt.getAddress().getNlocality());
+        Address adr = new Address(street, door, zipCode, Nlocality);
+        pps.remove(clt);
+        pp.setAddress(adr);
+        pps.add(pp);
+        ExportClients(pps);
+        JOptionPane.showMessageDialog(null, "Client updated with success!");
     }
 }

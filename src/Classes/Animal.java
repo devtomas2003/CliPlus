@@ -113,6 +113,6 @@ public class Animal implements Serializable {
             }
         }
 
-        Files.saveData("animals.csv", fileData);
+        Files.saveData("animals.txt", fileData);
     }
 }
