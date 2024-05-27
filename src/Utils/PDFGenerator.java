@@ -860,7 +860,7 @@ public class PDFGenerator {
                                     }
                                 }
 
-                                totalToPay *= 1.23;
+                                totalToPay *= 1.20;
                                 animalTotal += totalToPay;
 
                                 if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
@@ -1003,7 +1003,7 @@ public class PDFGenerator {
                                     }
                                 }
 
-                                totalToPay *= 1.23;
+                                totalToPay *= 1.20;
                                 animalTotal += totalToPay;
 
                                 if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
@@ -1159,7 +1159,7 @@ public class PDFGenerator {
                                 }
                             }
 
-                            totalToPay *= 1.23;
+                            totalToPay *= 1.20;
                             total += totalToPay;
                             if (apps.get(i).getAppoType() == Appointment.AppointmentType.Surgery) {
                                 LocalDateTime sEnd = apps.get(i).getTimeSlot().getStartTime().plusHours(2).minusMinutes(30);

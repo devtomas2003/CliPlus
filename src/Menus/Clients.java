@@ -329,7 +329,7 @@ public class Clients {
                 JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
             }
         }while (zipCode == 0);
-        String Nlocality = Interactive.readString("Locality", "Create Client", clt.getAddress().getNlocality());
+        String Nlocality = Interactive.readString("Locality", "Edit Client", clt.getAddress().getNlocality());
         Address adr = new Address(street, door, zipCode, Nlocality);
         pps.remove(clt);
         pp.setAddress(adr);

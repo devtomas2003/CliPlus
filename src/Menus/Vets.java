@@ -16,7 +16,7 @@ public class Vets {
         int opcao;
 
         do {
-            opcao = Interactive.readInt("Vets Operations\n\n1 - Create Vet\n2 - List All Vets\n3 - List Animals associated with vets\n4 - List associated Clients\n0 - Previus Menu", "Vets", 0);
+            opcao = Interactive.readInt("Vets Operations\n\n1 - Create Vet\n2 - List All Vets\n3 - List Animals associated with vets\n4 - List associated Clients\n5 - Edit Vet\n0 - Previus Menu", "Vets", 0);
 
             switch (opcao){
                 case 1:
@@ -133,6 +133,15 @@ public class Vets {
                     }
                     JOptionPane.showMessageDialog(null, txtToShow, "List associated Clients", JOptionPane.INFORMATION_MESSAGE);
                     break;
+                case 5:
+                    int omv = Interactive.readInt("Please insert your OMV ID", "Find Vet", 0);
+                    Vet vt = Vets.findVetByOMV(omv, peoples);
+                    if(vt == null){
+                        JOptionPane.showMessageDialog(null, "Cannot find Vet with this OMV ID");
+                    }else{
+                        EditVet(vt, peoples);
+                    }
+                    break;
                 case 0:
                     break;
                 default:
@@ -208,5 +217,34 @@ public class Vets {
             }
         }
         Files.saveData("vets.txt", fileData);
+    }
+
+    private static void EditVet(Vet vt, ArrayList<People> pps){
+        String name = Interactive.readString("Name", "Edit Vet", vt.getName());
+        String contact = Interactive.readString("Contact", "Edit Vet", vt.getContact());
+        Vet pp = new Vet(vt.getNif(), name, vt.getIdOV(), contact);
+
+        String street = Interactive.readString("Street", "Edit Vet", vt.getAddress().getNstreet());
+        int door = Interactive.readInt("Door", "Edit Vet", vt.getAddress().getndoor());
+        int zipCode = 0;
+        do{
+            try{
+                String ZipCode = Interactive.readString("Zip Code", "Edit Vet", String.valueOf(vt.getAddress().getZipCode())).replace("-", "");
+                zipCode = Integer.parseInt(ZipCode);
+                if(ZipCode.length() != 7){
+                    JOptionPane.showMessageDialog(null, "ZIP Code with invalid format", "ZIP Code Validate", JOptionPane.ERROR_MESSAGE);
+                    zipCode = 0;
+                }
+            }catch (NumberFormatException nfe){
+                JOptionPane.showMessageDialog(null, "Invalid ZIP Code", "ZIP Code Validation", JOptionPane.ERROR_MESSAGE);
+            }
+        }while (zipCode == 0);
+        String Nlocality = Interactive.readString("Locality", "Vet Client", vt.getAddress().getNlocality());
+        Address adr = new Address(street, door, zipCode, Nlocality);
+        pps.remove(vt);
+        pp.setAddress(adr);
+        pps.add(pp);
+        ExportVets(pps);
+        JOptionPane.showMessageDialog(null, "Vet updated with success!");
     }
 }

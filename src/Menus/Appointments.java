@@ -891,7 +891,7 @@ public class Appointments {
             }
         }
 
-        totalToPay *= 1.23;
+        totalToPay *= 1.20;
 
         if(opcaoTimeSlot == 1){
             LocalDateTime dtCh = Interactive.readDate("Scheduler", false, true);
