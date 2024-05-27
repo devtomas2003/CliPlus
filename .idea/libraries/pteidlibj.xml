@@ -1,8 +1,6 @@
 <component name="libraryTable">
   <library name="pteidlibj">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/src/pteidlibj.jar!/" />
-    </CLASSES>
+    <CLASSES />
     <JAVADOC />
     <SOURCES />
   </library>

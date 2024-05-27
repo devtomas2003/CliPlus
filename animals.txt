@@ -5,3 +5,4 @@ Bobi,889,M,Vira Lata,37.20000076293945,252959035,123,true
 Rai,892,F,Pantera Negra,85.0,252959035,123,true
 Psiu Psiu,890,F,Gata,24.799999237060547,251734030,125,true
 Toto,893,M,Loxodonta,74.9000015258789,251734030,125,true
+ambrosio,43,nao binario,porco da india,12.0,251734030,123,true

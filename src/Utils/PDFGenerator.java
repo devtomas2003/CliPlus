@@ -1205,7 +1205,7 @@ public class PDFGenerator {
         }
     }
 
-    public static void ClientReportRecord(Client c, ArrayList<Animal> anms){
+    public static void ClientReportRecord(Client c){
         try{
             Date now = new Date();
             Long longTime = now.getTime() / 1000;
@@ -1237,7 +1237,7 @@ public class PDFGenerator {
                             tableNormal.addCell(header);
                         });
 
-                for(Animal anm : anms){
+                for(Animal anm : c.getAnimals()){
                     tableNormal.addCell(new Paragraph(String.valueOf(anm.getId()), fontTable));
                     tableNormal.addCell(new Paragraph(anm.getName(), fontTable));
                     tableNormal.addCell(new Paragraph(anm.getSpecie(), fontTable));

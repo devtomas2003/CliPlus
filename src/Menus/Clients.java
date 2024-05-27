@@ -155,7 +155,7 @@ public class Clients {
                                 }
                             }
 
-                            PDFGenerator.ClientReportRecord(pp, anms);
+                            PDFGenerator.ClientReportRecord(pp);
                         }catch (PTEID_ExNoReader ex){
                             JOptionPane.showMessageDialog(null, "No Reader Found!", "Find Client", JOptionPane.ERROR_MESSAGE);
                         }catch (PTEID_ExNoCardPresent ex) {
@@ -180,7 +180,7 @@ public class Clients {
                             }
                         }
 
-                        PDFGenerator.ClientReportRecord(pp, anms);
+                        PDFGenerator.ClientReportRecord(pp);
                     }
                 case 5:
                     int ccReadEdit = JOptionPane.showConfirmDialog(null, "Do you want to read the client from the citizen card?", "Find Client", JOptionPane.YES_NO_OPTION);
